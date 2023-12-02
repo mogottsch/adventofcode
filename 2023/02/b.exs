@@ -1,11 +1,14 @@
 defmodule B do
-  def parse_file(file_path) do
+  def part_b(file_path) do
     file_path
     |> read_lines
-    |> Enum.map(&parse_game/1)
-    |> Enum.map(&get_minimum_config/1)
-    |> Enum.map(&Map.values/1)
-    |> Enum.map(&Enum.product/1)
+    |> Enum.map(fn line ->
+      line
+      |> parse_game()
+      |> get_minimum_config()
+      |> Map.values()
+      |> Enum.product()
+    end)
     |> Enum.sum()
   end
 
@@ -15,26 +18,33 @@ defmodule B do
   end
 
   defp parse_game(line) do
-    [game_id | game_info] = line |> String.split(": ")
+    [game_id | game_info] = String.split(line, ": ")
+    {parse_game_id(game_id), List.first(game_info) |> parse_game_info()}
+  end
 
-    game_id = game_id |> String.split(" ") |> List.last() |> Integer.parse() |> elem(0)
+  defp parse_game_id(game_id_part) do
+    game_id_part
+    |> String.split(" ")
+    |> List.last()
+    |> String.to_integer()
+  end
 
-    takes =
-      game_info
-      |> List.first()
-      |> String.split("; ")
-      |> Enum.map(&String.split(&1, ", "))
-      |> Enum.map(fn take ->
-        take
-        |> Enum.map(
-          &(String.split(&1, " ")
-            |> List.to_tuple()
-            |> then(fn {num, color} -> {color, String.to_integer(num)} end))
-        )
-        |> Map.new()
-      end)
+  defp parse_game_info(game_info) do
+    game_info
+    |> String.split("; ")
+    |> Enum.map(&parse_take/1)
+  end
 
-    {game_id, takes}
+  defp parse_take(take) do
+    take
+    |> String.split(", ")
+    |> Enum.map(&parse_color_and_number/1)
+    |> Map.new()
+  end
+
+  defp parse_color_and_number(pair) do
+    [num_str, color] = String.split(pair, " ")
+    {color, String.to_integer(num_str)}
   end
 
   defp get_minimum_config({_game_id, takes}) do
@@ -48,11 +58,8 @@ defmodule B do
   end
 
   defp update_minimum_config_if_necessary(take, config) do
-    config
-    |> Map.to_list()
-    |> Enum.map(fn {key, value} -> {key, max(value, Map.get(take, key, 0))} end)
-    |> Map.new()
+    Map.merge(config, take, fn _key, old_val, new_val -> max(old_val, new_val) end)
   end
 end
 
-IO.inspect(B.parse_file("./input.txt"))
+IO.inspect(B.part_b("./input.txt"))
