@@ -32,6 +32,6 @@ mix benchmark
 ## Inspiration
 
 The mix tasks are inspired by some awesome repositories:
-- [mhanberg/advent-of-code-elixir-starter]
-- [staylorwr/elixir_aoc]
-- [gahjelle/advent_of_code]
+- [mhanberg/advent-of-code-elixir-starter](https://github.com/mhanberg/advent-of-code-elixir-starter)
+- [staylorwr/elixir_aoc](https://github.com/staylorwr/elixir_aoc)
+- [gahjelle/advent_of_code](https://github.com/gahjelle/advent_of_code)
