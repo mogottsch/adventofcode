@@ -4,4 +4,5 @@ This repository contains my solutions for [Advent of Code](https://adventofcode.
 
 
 | Year | Language        |
+|------|-----------------|
 | 2023 | [Elixir](2023/) |
