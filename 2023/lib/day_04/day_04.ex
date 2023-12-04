@@ -1,7 +1,6 @@
-defmodule Day04 do
-  def part_a(file_path) do
-    file_path
-    |> parse_file()
+defmodule Day04.Day04 do
+  def part_a(input) do
+    input
     |> Enum.map(&score/1)
     |> Enum.sum()
   end
@@ -9,9 +8,8 @@ defmodule Day04 do
   defp score(size) when size == 0, do: 0
   defp score(size), do: 2 ** (size - 1)
 
-  def part_b(file_path) do
-    file_path
-    |> parse_file()
+  def part_b(input) do
+    input
     |> Enum.with_index()
     |> then(&{&1, &1 |> length |> create_one_map})
     |> then(fn {win_map, one_map} ->
@@ -42,7 +40,7 @@ defmodule Day04 do
     0..(size - 1) |> Enum.map(&{&1, 1}) |> Map.new()
   end
 
-  defp parse_file(file_path) do
+  def parse_file(file_path) do
     {:ok, file} = File.read(file_path)
 
     String.split(file, "\n", trim: true)
@@ -62,6 +60,3 @@ defmodule Day04 do
     |> List.to_tuple()
   end
 end
-
-IO.inspect(Day04.part_a("./input.txt"))
-IO.inspect(Day04.part_b("./input.txt"))

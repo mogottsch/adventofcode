@@ -1,9 +1,10 @@
-defmodule A do
+defmodule Day03.Day03 do
   @null_string "."
   @adjacent_symbol "X"
+  @gear_symbol "*"
 
-  def part_a(file_path) do
-    parsed_file = file_path |> parse_file()
+  def part_a(input) do
+    parsed_file = input
     part_adj_matrix = parsed_file |> get_adjacency_matrix()
     number_matrix = parsed_file |> get_number_matrix()
 
@@ -14,7 +15,7 @@ defmodule A do
     |> Enum.sum()
   end
 
-  defp parse_file(file_path) do
+  def parse_file(file_path) do
     {:ok, file} = File.read(file_path)
     String.split(file, "\n", trim: true) |> Enum.map(&String.split(&1, "", trim: true))
   end
@@ -88,6 +89,68 @@ defmodule A do
   defp is_symbol?(char) do
     not is_dot?(char) and not is_number?(char)
   end
+
+  def part_b(input) do
+    parsed_file = input
+
+    number_matrix = parsed_file |> get_number_matrix()
+
+    number_groups =
+      number_matrix
+      |> NumberIdentifier.identify_number_groups(@null_string)
+
+    parsed_file
+    |> get_potential_gear_locations()
+    |> identify_gear_neighbor_number_groups(number_groups)
+    |> Enum.map(fn group_group ->
+      group_group
+      |> Enum.map(fn group ->
+        group |> retrieve_number_value(number_matrix)
+      end)
+      |> Enum.product()
+    end)
+    |> Enum.sum()
+  end
+
+  defp get_potential_gear_locations(matrix) do
+    matrix
+    |> Enum.with_index()
+    |> Enum.reduce([], fn {row, row_idx}, acc ->
+      row
+      |> Enum.with_index()
+      |> Enum.reduce(acc, fn {cell, col_idx}, acc ->
+        if is_gear?(cell) do
+          [{row_idx, col_idx} | acc]
+        else
+          acc
+        end
+      end)
+    end)
+  end
+
+  defp identify_gear_neighbor_number_groups(potential_gear_locations, number_groups) do
+    delta_rows = [-1, 0, 1]
+    delta_cols = [-1, 0, 1]
+
+    potential_gear_locations
+    |> Enum.map(fn {row_idx, col_idx} ->
+      number_groups
+      |> Enum.filter(fn group ->
+        Enum.any?(delta_rows, fn delta_row ->
+          Enum.any?(delta_cols, fn delta_col ->
+            Enum.any?(group, fn {r, c} ->
+              r == row_idx + delta_row and c == col_idx + delta_col
+            end)
+          end)
+        end)
+      end)
+    end)
+    |> Enum.filter(&(length(&1) == 2))
+  end
+
+  defp is_gear?(char) do
+    char == @gear_symbol
+  end
 end
 
 defmodule NumberIdentifier do
@@ -148,7 +211,3 @@ defmodule NumberIdentifier do
     end
   end
 end
-
-IO.inspect(A.part_a("./input.txt"))
-# IO.puts()
-

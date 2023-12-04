@@ -1,29 +1,32 @@
-defmodule StringHelpers do
-  def find_substring_position(string, substring, :first) do
-    string
-    |> String.graphemes()
-    |> Enum.with_index()
-    |> Enum.find_value(fn {_, index} ->
-      if String.starts_with?(String.slice(string, index, String.length(substring)), substring) do
-        index
+defmodule Day01.Day01 do
+  def part_a(input) do
+    lines = input
+
+    is_number = fn char ->
+      case Integer.parse(char) do
+        {_, ""} -> true
+        _ -> false
       end
-    end)
+    end
+
+    find_first_digit = fn string -> Enum.find(String.graphemes(string), is_number) end
+
+    find_last_digit = fn string ->
+      Enum.find(String.graphemes(String.reverse(string)), is_number)
+    end
+
+    total =
+      Enum.zip(
+        Enum.map(lines, find_first_digit),
+        Enum.map(lines, find_last_digit)
+      )
+      |> Enum.map(fn {head, tail} -> head <> tail end)
+      |> Enum.map(fn string -> String.to_integer(string) end)
+      |> Enum.sum()
+
+    total
   end
 
-  def find_substring_position(string, substring, :last) do
-    string
-    |> String.graphemes()
-    |> Enum.with_index()
-    |> Enum.reverse()
-    |> Enum.find_value(fn {_, index} ->
-      if String.ends_with?(String.slice(string, index, String.length(substring)), substring) do
-        index
-      end
-    end)
-  end
-end
-
-defmodule B do
   @digit_map %{
     "one" => 1,
     "two" => 2,
@@ -36,8 +39,8 @@ defmodule B do
     "nine" => 9
   }
 
-  def parse_file(file_path) do
-    lines = file_path |> read_lines
+  def part_b(input) do
+    lines = input
 
     Enum.zip(
       Enum.map(lines, &find_first_digit/1),
@@ -46,11 +49,6 @@ defmodule B do
     |> Enum.map(fn {first, last} -> first <> last end)
     |> Enum.map(fn string -> String.to_integer(string) end)
     |> Enum.sum()
-  end
-
-  defp read_lines(file_path) do
-    {:ok, file} = File.read(file_path)
-    String.split(file, "\n") |> Enum.filter(&(&1 != ""))
   end
 
   defp find_first_digit(string) do
@@ -102,7 +100,34 @@ defmodule B do
         end
     end
   end
+
+  def parse_file(file_path) do
+    {:ok, file} = File.read(file_path)
+    String.split(file, "\n", trim: true)
+  end
 end
 
-total = B.parse_file("./input.txt")
-IO.puts(total)
+defmodule StringHelpers do
+  def find_substring_position(string, substring, :first) do
+    string
+    |> String.graphemes()
+    |> Enum.with_index()
+    |> Enum.find_value(fn {_, index} ->
+      if String.starts_with?(String.slice(string, index, String.length(substring)), substring) do
+        index
+      end
+    end)
+  end
+
+  def find_substring_position(string, substring, :last) do
+    string
+    |> String.graphemes()
+    |> Enum.with_index()
+    |> Enum.reverse()
+    |> Enum.find_value(fn {_, index} ->
+      if String.ends_with?(String.slice(string, index, String.length(substring)), substring) do
+        index
+      end
+    end)
+  end
+end

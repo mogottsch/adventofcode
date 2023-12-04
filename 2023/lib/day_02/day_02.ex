@@ -1,7 +1,25 @@
-defmodule B do
-  def part_b(file_path) do
-    file_path
-    |> read_lines
+defmodule Day02.Day02 do
+  @bag_contents %{
+    "red" => 12,
+    "green" => 13,
+    "blue" => 14
+  }
+
+  def parse_file(file_path) do
+    {:ok, file} = File.read(file_path)
+    String.split(file, "\n", trim: true)
+  end
+
+  def part_a(input) do
+    input
+    |> Enum.map(&parse_game/1)
+    |> Enum.filter(&is_game_valid/1)
+    |> Enum.map(&elem(&1, 0))
+    |> Enum.sum()
+  end
+
+  def part_b(input) do
+    input
     |> Enum.map(fn line ->
       line
       |> parse_game()
@@ -12,9 +30,16 @@ defmodule B do
     |> Enum.sum()
   end
 
-  defp read_lines(file_path) do
-    {:ok, file} = File.read(file_path)
-    String.split(file, "\n", trim: true)
+  defp is_game_valid({_game_id, takes}) do
+    takes |> Enum.map(&is_take_valid/1) |> Enum.all?(& &1)
+  end
+
+  defp is_take_valid(take) do
+    take |> Enum.map(&is_color_valid/1) |> Enum.all?(& &1)
+  end
+
+  defp is_color_valid({color, num}) do
+    num <= @bag_contents[color]
   end
 
   defp parse_game(line) do
@@ -61,5 +86,3 @@ defmodule B do
     Map.merge(config, take, fn _key, old_val, new_val -> max(old_val, new_val) end)
   end
 end
-
-IO.inspect(B.part_b("./input.txt"))
