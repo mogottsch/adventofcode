@@ -1,10 +1,20 @@
 defmodule Mix.Tasks.Benchmark do
   use Mix.Task
 
-  def run([]) do
+  def run(days) do
     with {:ok, list} <- :application.get_key(:aoc, :modules) do
       list
       |> Enum.filter(&Regex.match?(~r/Day\d{2}\.Day\d{2}/, to_string(&1)))
+      |> then(fn list ->
+        if days == [] do
+          list
+        else
+          Enum.filter(list, fn module_name ->
+            day = String.slice(to_string(module_name), -2..-1) |> String.to_integer()
+            Enum.any?(days, fn d -> String.to_integer(d) == day end)
+          end)
+        end
+      end)
       |> Enum.each(&benchmark(&1))
     end
   end
