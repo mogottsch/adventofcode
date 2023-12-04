@@ -23,7 +23,9 @@ defmodule Aoc.MixProject do
     [
       {:dotenvy, "~> 0.8.0"},
       {:tesla, "~> 1.8.0"},
-      {:floki, "~> 0.35.0"}
+      {:floki, "~> 0.35.0"},
+      {:benchee, "~> 1.2.0"},
+      {:number, "~> 1.0.4"},
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
