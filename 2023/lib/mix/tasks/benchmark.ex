@@ -39,8 +39,9 @@ defmodule Mix.Tasks.Benchmark do
           module_name.parse_file(input_path)
         end
       },
-      time: 1,
-      warmup: 0.1
+      time: 2,
+      warmup: 0.5,
+      parallel: 8
     )
     |> Benchee.collect()
     |> Benchee.statistics()
