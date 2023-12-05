@@ -113,7 +113,7 @@ defmodule Mix.Tasks.Benchmark do
     File.write!(readme_path, new_readme)
   end
 
-  defp replace_if_exists(lines, day, markdown, day_int) do
+  defp replace_if_exists(lines, _day, markdown, day_int) do
     Enum.map(lines, fn line ->
       if String.split(line, "|", trim: true)
          |> List.first()
@@ -126,7 +126,7 @@ defmodule Mix.Tasks.Benchmark do
     end)
   end
 
-  defp add_if_not_exists(lines, day, markdown, day_int) do
+  defp add_if_not_exists(lines, _day, markdown, day_int) do
     if Enum.any?(lines, fn line ->
          String.split(line, "|", trim: true)
          |> List.first()

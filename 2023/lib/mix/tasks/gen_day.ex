@@ -109,7 +109,7 @@ defmodule Mix.Tasks.GenDay do
 
       @dir_path "lib/day_#{day}/"
 
-      describe "" do
+      describe "part_a/1" do
         test "example" do
           assert @dir_path <> "example_a.txt" |> parse_file() |> part_a() == @example_a_answer
         end
