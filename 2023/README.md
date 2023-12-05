@@ -1,5 +1,6 @@
 # 2023 Advent of Code Solutions Elixir
 
+**Disclaimer:** This is my first time writing elixir.
 
 ## Mix tasks
 ### Generate new day
