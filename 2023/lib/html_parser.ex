@@ -35,7 +35,7 @@ defmodule HtmlParser do
           raise "Invalid part"
       end
     end)
-    |> Floki.find("code")
+    |> Floki.find("code em")
     |> List.last()
     |> Floki.text()
   end
