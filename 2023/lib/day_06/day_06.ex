@@ -58,9 +58,6 @@ defmodule Day06.Day06 do
           floor(max_valid)
         end
 
-      {1 / 2 * (race_time - :math.sqrt(race_time * race_time - 4 * distance)),
-       1 / 2 * (race_time + :math.sqrt(race_time * race_time - 4 * distance))}
-
       max_valid - min_valid + 1
     end)
   end
