@@ -47,10 +47,8 @@ defmodule Day07.Day07 do
     |> Enum.sort_by(fn {{type, order}, _} ->
       {@type_value[type], order}
     end)
-    |> Enum.with_index()
-    |> Enum.map(fn {{_, bet}, index} ->
-      bet * (index + 1)
-    end)
+    |> Enum.with_index(1)
+    |> Enum.map(fn {{_, bet}, index} -> bet * index end)
     |> Enum.sum()
   end
 
@@ -78,25 +76,19 @@ defmodule Day07.Day07 do
 
   defp calculate_type(cards, :a) do
     cards
-    |> count_occurrences()
+    |> Enum.frequencies()
     |> sort_map_values_desc()
     |> values_to_type()
   end
 
   defp calculate_type(cards, :b) do
     cards
-    |> count_occurrences()
+    |> Enum.frequencies()
     |> extract_joker_value()
     |> then(fn {map, n_jokers} ->
       sort_map_values_desc(map) |> apply_joker(n_jokers)
-    end) |> values_to_type()
-  end
-
-  defp count_occurrences(cards) do
-    cards
-    |> Enum.reduce(%{}, fn card, map ->
-      Map.update(map, card, 1, &(&1 + 1))
     end)
+    |> values_to_type()
   end
 
   defp sort_map_values_desc(map) do

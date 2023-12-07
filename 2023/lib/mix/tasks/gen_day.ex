@@ -75,15 +75,15 @@ defmodule Mix.Tasks.GenDay do
   defp day_module_template(day) do
     """
     defmodule Day#{day}.Day#{day} do
+      def parse_file(file_path) do
+        # Your code here
+      end
+
       def part_a(input) do
         # Your code here
       end
 
       def part_b(input) do
-        # Your code here
-      end
-
-      def parse_file(file_path) do
         # Your code here
       end
     end
