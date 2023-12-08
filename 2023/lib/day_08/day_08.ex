@@ -49,12 +49,12 @@ defmodule Day08.Day08 do
   def part_b({directions, network}) do
     starting_nodes = network |> Map.keys() |> get_nodes_ending_with("A")
 
-      starting_nodes
-      |> Enum.map(fn node ->
-        get_nth_distance_to_z(network, directions, 0, node, 2, 0) -
-          get_nth_distance_to_z(network, directions, 0, node, 1, 0)
-      end)
-      |> lcm_list()
+    starting_nodes
+    |> Enum.map(fn node ->
+      get_nth_distance_to_z(network, directions, 0, node, 2, 0) -
+        get_nth_distance_to_z(network, directions, 0, node, 1, 0)
+    end)
+    |> lcm_list()
   end
 
   defp get_nodes_ending_with(network, char) do
