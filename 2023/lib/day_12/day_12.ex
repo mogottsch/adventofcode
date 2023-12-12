@@ -1,4 +1,8 @@
 defmodule Day12.Day12 do
+  use Nebulex.Caching
+
+  alias Day_12.Cache, as: Cache
+
   def parse_file(file_path) do
     file_path
     |> File.read!()
@@ -19,90 +23,103 @@ defmodule Day12.Day12 do
   end
 
   def part_a(input) do
+    Cache.setup()
+
     input
     |> Enum.map(fn {line, code} ->
       line
-      |> count_unknowns()
-      |> generate_samples()
-      |> Enum.map(&String.split(&1, "", trim: true))
-      |> fill_in_samples(line)
-      |> Enum.filter(fn line -> is_valid(line, code) end)
-      |> Enum.count()
+      |> n_valid_arrangements(code)
     end)
     |> Enum.sum()
   end
 
-  def count_unknowns(line) do
-    line
-    |> Enum.frequencies()
-    |> Map.get("?", 0)
-  end
+  defp n_valid_arrangements_cached(line, code, current_group_size \\ 0) do
+    cached_value = Cache.get({line, code, current_group_size})
 
-  # generate a list of all possible instances
-  # an instance is of length n_unknowns and contains only '#' and '.'
-  def generate_samples(n_unknowns) when n_unknowns > 0 do
-    generate_samples(n_unknowns, ["#", "."], [])
-  end
-
-  defp generate_samples(0, _characters, acc), do: acc
-
-  defp generate_samples(n, characters, acc) when n > 0 do
-    if acc == [] do
-      # Initial call, start with the characters
-      generate_samples(n - 1, characters, characters)
+    if cached_value != nil do
+      cached_value
     else
-      # Generate combinations by appending each character to each accumulated string
-      extended = for prefix <- acc, char <- characters, do: prefix <> char
-      generate_samples(n - 1, characters, extended)
+      value = n_valid_arrangements(line, code, current_group_size)
+      Cache.put({line, code, current_group_size}, value)
+      value
     end
   end
 
-  def fill_in_samples(samples, line) do
-    samples
-    |> Enum.map(fn sample ->
-      line
-      |> Enum.reduce({sample, []}, fn char, {sample, line} ->
-        if char == "?" do
-          {next_char, sample} = List.pop_at(sample, 0)
-          {sample, [next_char | line]}
-        else
-          {sample, [char | line]}
-        end
-      end)
-      |> elem(1)
-      |> Enum.reverse()
-    end)
+  defp n_valid_arrangements(line, code, current_group_size \\ 0)
+
+  defp n_valid_arrangements(line, code, current_group_size) when length(line) == 0 do
+    if (current_group_size == 0 and code == []) or
+         (length(code) == 1 and code |> Enum.at(0) == current_group_size) do
+      1
+    else
+      0
+    end
   end
 
-  # checks whether the groups of consecutive '#'s in the line
-  # match the code
-  defp is_valid(line, code) do
-    line
-    |> Enum.with_index()
-    |> Enum.reduce({0, []}, fn {char, index}, {current_group_size, group_sizes} ->
-      is_last_char = index == length(line) - 1
+  defp n_valid_arrangements(line, code, current_group_size) do
+    [first_char | rest] = line
 
-      current_group_size =
-        if char == "#" do
-          current_group_size + 1
-        else
-          current_group_size
-        end
+    case first_char do
+      "#" -> handle_hash(rest, code, current_group_size)
+      "." -> handle_dot(rest, code, current_group_size)
+      "?" -> handle_unknown(rest, code, current_group_size)
+    end
+  end
 
-      if (char == "." or is_last_char) and current_group_size > 0 do
-        {0, [current_group_size | group_sizes]}
+  defp handle_dot(rest, code, current_group_size) do
+    if current_group_size == 0 do
+      n_valid_arrangements_cached(rest, code, current_group_size)
+    else
+      handle_dot_new_group(rest, code, current_group_size)
+    end
+  end
+
+  defp handle_dot_new_group(rest, code, current_group_size) do
+    if code == [] do
+      0
+    else
+      [next_expected_group_size | rest_code] = code
+
+      if current_group_size == next_expected_group_size do
+        n_valid_arrangements_cached(rest, rest_code, 0)
       else
-        {current_group_size, group_sizes}
+        0
       end
-    end)
-    |> elem(1)
-    |> Enum.reverse()
-    |> then(fn lengths ->
-      lengths == code
-    end)
+    end
+  end
+
+  defp handle_hash(rest, code, current_group_size) do
+    n_valid_arrangements_cached(rest, code, current_group_size + 1)
+  end
+
+  defp handle_unknown(rest, code, current_group_size) do
+    handle_hash(rest, code, current_group_size) +
+      handle_dot(rest, code, current_group_size)
   end
 
   def part_b(input) do
-    # Your code here
+    Cache.setup()
+
+    input
+    |> Enum.map(fn {line, code} ->
+      {
+        line |> unfold("?"),
+        code |> unfold(nil)
+      }
+    end)
+    |> Enum.map(fn {line, code} ->
+
+      line
+      |> n_valid_arrangements(code)
+    end)
+    |> Enum.sum()
+  end
+
+  defp unfold(code, nil) do
+    (code |> List.duplicate(4) |> List.flatten()) ++ code
+  end
+
+  defp unfold(line, char) do
+    ((line ++ [char]) |> List.duplicate(4) |> List.flatten()) ++ line
   end
 end

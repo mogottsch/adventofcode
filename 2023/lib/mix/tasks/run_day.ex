@@ -4,11 +4,9 @@ defmodule Mix.Tasks.RunDay do
   @shortdoc "Runs a specified part of the Advent of Code for a given day"
 
   def run([day_str, part, file_type]) do
-
     day = String.pad_leading(day_str, 2, "0")
     module_name = String.to_atom("Elixir.Day#{day}.Day#{day}")
     file_path = "lib/day_#{day}/#{file_type}.txt"
-
 
     if File.exists?(file_path) do
       input = module_name.parse_file(file_path)
