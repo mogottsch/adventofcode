@@ -15,19 +15,6 @@ defmodule Day11.Day11 do
     |> Enum.sum()
   end
 
-  defp expand(space) do
-    empty_rows =
-      space
-      |> index_of_empty_rows()
-
-    empty_cols =
-      space
-      |> transpose()
-      |> index_of_empty_rows()
-
-    space |> expand_rows(empty_rows) |> transpose() |> expand_rows(empty_cols) |> transpose()
-  end
-
   defp index_of_empty_rows(space) do
     space
     |> Enum.with_index()
@@ -37,17 +24,6 @@ defmodule Day11.Day11 do
 
   defp transpose(space), do: space |> Enum.zip_with(&Function.identity/1)
 
-  defp expand_rows(space, row_indexes) do
-    space
-    |> Enum.with_index()
-    |> Enum.flat_map(fn {row, row_index} ->
-      if Enum.member?(row_indexes, row_index) do
-        [row, row]
-      else
-        [row]
-      end
-    end)
-  end
 
   defp expand_galaxies_across_space_by(galaxies, space, n) do
     empty_rows =
