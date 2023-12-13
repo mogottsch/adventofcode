@@ -1,5 +1,4 @@
 defmodule Day12.Day12 do
-  use Nebulex.Caching
 
   alias Day_12.Cache, as: Cache
 
@@ -28,7 +27,7 @@ defmodule Day12.Day12 do
     input
     |> Enum.map(fn {line, code} ->
       line
-      |> n_valid_arrangements(code)
+      |> n_valid_arrangements_cached(code)
     end)
     |> Enum.sum()
   end
@@ -108,9 +107,8 @@ defmodule Day12.Day12 do
       }
     end)
     |> Enum.map(fn {line, code} ->
-
       line
-      |> n_valid_arrangements(code)
+      |> n_valid_arrangements_cached(code)
     end)
     |> Enum.sum()
   end
