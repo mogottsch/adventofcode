@@ -44,7 +44,6 @@ defmodule Day12.Day12 do
     end
   end
 
-  defp n_valid_arrangements(line, code, current_group_size \\ 0)
 
   defp n_valid_arrangements(line, code, current_group_size) when length(line) == 0 do
     if (current_group_size == 0 and code == []) or
