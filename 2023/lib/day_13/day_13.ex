@@ -76,7 +76,6 @@ defmodule Day13.Day13 do
   end
 
   defp find_mirror_axis_smudged(grid) do
-    transposed_grid = grid |> transpose()
 
     case find_mirror_axis_in_rows_smudged(grid) do
       {_, index} ->
