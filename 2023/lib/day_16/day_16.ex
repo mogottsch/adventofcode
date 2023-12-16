@@ -11,15 +11,26 @@ defmodule Day16.Day16 do
     |> String.graphemes()
   end
 
-  def part_a(grid) do
-    run_ray(grid, {0, 0}, {1, 0}) |> count_energized()
+  defmacro direction(direction_atom) do
+    case direction_atom do
+      quote(do: :up) -> quote(do: {0, -1})
+      quote(do: :right) -> quote(do: {1, 0})
+      quote(do: :down) -> quote(do: {0, 1})
+      quote(do: :left) -> quote(do: {-1, 0})
+    end
   end
 
-  def run_ray(grid, {x, y}, {dx, dy}, visited \\ MapSet.new()) do
-    if already_visited?(visited, {x, y}, {dx, dy}) or not in_bounds?(grid, {x, y}) do
+  def part_a(grid) do
+    run_ray(grid, {0, 0}, direction(:right)) |> count_energized()
+  end
+
+  def run_ray(grid, pos, dir, visited \\ MapSet.new()) do
+    if already_visited?(visited, pos, dir) or not in_bounds?(grid, pos) do
       visited
     else
-      visited = mark_visited(visited, {x, y}, {dx, dy})
+      visited = mark_visited(visited, pos, dir)
+
+      {x, y} = pos
 
       symbol =
         grid
@@ -27,21 +38,21 @@ defmodule Day16.Day16 do
         |> Enum.at(x)
 
       case symbol do
-        "." -> pass_through(grid, {x, y}, {dx, dy}, visited)
-        "|" -> handle_vertical_splitter(grid, {x, y}, {dx, dy}, visited)
-        "-" -> handle_horizontal_splitter(grid, {x, y}, {dx, dy}, visited)
-        "\\" -> handle_backslash_mirror(grid, {x, y}, {dx, dy}, visited)
-        "/" -> handle_forwardslash_mirror(grid, {x, y}, {dx, dy}, visited)
+        "." -> pass_through(grid, pos, dir, visited)
+        "|" -> handle_vertical_splitter(grid, pos, dir, visited)
+        "-" -> handle_horizontal_splitter(grid, pos, dir, visited)
+        "\\" -> handle_backslash_mirror(grid, pos, dir, visited)
+        "/" -> handle_forwardslash_mirror(grid, pos, dir, visited)
       end
     end
   end
 
-  defp mark_visited(visited, {x, y}, {dx, dy}) do
-    MapSet.put(visited, {{x, y}, {dx, dy}})
+  defp mark_visited(visited, pos, dir) do
+    MapSet.put(visited, {pos, dir})
   end
 
-  defp already_visited?(visited, {x, y}, {dx, dy}) do
-    MapSet.member?(visited, {{x, y}, {dx, dy}})
+  defp already_visited?(visited, pos, dir) do
+    MapSet.member?(visited, {pos, dir})
   end
 
   defp in_bounds?(grid, {x, y}) do
@@ -58,15 +69,6 @@ defmodule Day16.Day16 do
   defp move({x, y}, :down), do: {x, y + 1}
   defp move({x, y}, :left), do: {x - 1, y}
 
-  defmacro direction(direction_atom) do
-    case direction_atom do
-      quote(do: :up) -> quote(do: {0, -1})
-      quote(do: :right) -> quote(do: {1, 0})
-      quote(do: :down) -> quote(do: {0, 1})
-      quote(do: :left) -> quote(do: {-1, 0})
-    end
-  end
-
   defp direction_func(direction_atom) do
     case direction_atom do
       :up -> {0, -1}
@@ -78,25 +80,25 @@ defmodule Day16.Day16 do
 
   # |
   defp handle_vertical_splitter(grid, pos, {dx, dy}, visited) do
-    if dx != 0 do
+    if dx == 0 do
+      pass_through(grid, pos, {dx, dy}, visited)
+    else
       run_ray(grid, move(pos, :up), direction(:up), visited)
       |> then(fn visited ->
         run_ray(grid, move(pos, :down), direction(:down), visited)
       end)
-    else
-      pass_through(grid, pos, {dx, dy}, visited)
     end
   end
 
   # -
   defp handle_horizontal_splitter(grid, pos, {dx, dy}, visited) do
-    if dy != 0 do
+    if dy == 0 do
+      pass_through(grid, pos, {dx, dy}, visited)
+    else
       run_ray(grid, move(pos, :left), direction(:left), visited)
       |> then(fn visited ->
         run_ray(grid, move(pos, :right), direction(:right), visited)
       end)
-    else
-      pass_through(grid, pos, {dx, dy}, visited)
     end
   end
 
