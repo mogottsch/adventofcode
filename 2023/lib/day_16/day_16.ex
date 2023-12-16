@@ -113,13 +113,9 @@ defmodule Day16.Day16 do
   defp handle_forwardslash_mirror(grid, pos, dir, visited) do
     # /
     case dir do
-      # from below to right
       direction(:up) -> run_ray(grid, move(pos, :right), direction(:right), visited)
-      # from above to left
       direction(:down) -> run_ray(grid, move(pos, :left), direction(:left), visited)
-      # from left to above
       direction(:left) -> run_ray(grid, move(pos, :down), direction(:down), visited)
-      # from right to below
       direction(:right) -> run_ray(grid, move(pos, :up), direction(:up), visited)
     end
   end
