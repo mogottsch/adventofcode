@@ -26,7 +26,8 @@ defmodule Aoc.MixProject do
       {:floki, "~> 0.35.0"},
       {:benchee, "~> 1.2.0"},
       {:number, "~> 1.0.4"},
-      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:heap, "~> 3.0.0"}
     ]
   end
 end
