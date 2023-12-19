@@ -148,7 +148,7 @@ defmodule Day18.Day18 do
   end
 
   def part_b(input) do
-    {bbox, origin} =
+    {_bbox, origin} =
       input
       |> Enum.map(&parse_line_b/1)
       |> get_shape()
@@ -163,7 +163,7 @@ defmodule Day18.Day18 do
     # input |> draw(bbox |> make_canvas(), origin) |> count_area()
   end
 
-  defp parse_line_b({dir, length, color}) do
+  defp parse_line_b({_dir, _length, color}) do
     color
     |> String.slice(2..-2)
     |> String.split_at(5)
@@ -262,13 +262,6 @@ defmodule Day18.Day18 do
     |> Enum.sum()
   end
 
-  defp decrement_first_element_in_list(list) do
-    if Enum.empty?(list) do
-      []
-    else
-      [Enum.at(list, 0) - 1 | Enum.drop(list, 1)]
-    end
-  end
 
   # DEBUG
   #
