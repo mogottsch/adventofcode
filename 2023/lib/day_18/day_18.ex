@@ -43,7 +43,7 @@ defmodule Day18.Day18 do
       |> get_shape()
       |> normalize_to_origin()
 
-    input |> draw(bbox |> make_canvas(), origin) |> to_file("drawing.txt")
+    # input |> draw(bbox |> make_canvas(), origin) |> to_file("drawing.txt")
 
     input
     |> get_lines(origin)

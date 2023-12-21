@@ -41,7 +41,7 @@ defmodule Mix.Tasks.Benchmark do
       },
       time: 2,
       warmup: 0.5,
-      parallel: 8
+      parallel: 1
     )
     |> Benchee.collect()
     |> Benchee.statistics()

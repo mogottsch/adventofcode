@@ -1,5 +1,4 @@
-
-defmodule Day_12.Cache do
+defmodule Day_21.Cache do
   @cache_key_prefix :day_12_cache
   def setup() do
     :ets.new(@cache_key_prefix, [
