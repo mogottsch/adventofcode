@@ -38,7 +38,7 @@ defmodule Day18.Day18 do
         {dir, length}
       end)
 
-    {bbox, origin} =
+    {_bbox, origin} =
       input
       |> get_shape()
       |> normalize_to_origin()
@@ -76,53 +76,53 @@ defmodule Day18.Day18 do
     {{max_x - min_x, max_y - min_y}, {-min_x, -min_y}}
   end
 
-  defp make_canvas({width, height}) do
-    Enum.map(0..height, fn _ ->
-      Enum.map(0..width, fn _ ->
-        "."
-      end)
-    end)
-  end
-
-  defp draw(instructions, canvas, origin) do
-    instructions
-    |> Enum.reduce(
-      {origin, canvas},
-      fn {dir, length}, {{x, y}, canvas} ->
-        {new_x, new_y} =
-          case dir do
-            :right -> {x + length, y}
-            :left -> {x - length, y}
-            :up -> {x, y - length}
-            :down -> {x, y + length}
-          end
-
-        left = min(x, new_x)
-        right = max(x, new_x)
-        top = min(y, new_y)
-        bottom = max(y, new_y)
-
-        canvas =
-          canvas
-          |> Enum.with_index()
-          |> Enum.map(fn {row, row_index} ->
-            row
-            |> Enum.with_index()
-            |> Enum.map(fn {el, col_index} ->
-              if col_index >= left && col_index <= right &&
-                   row_index >= top && row_index <= bottom do
-                "#"
-              else
-                el
-              end
-            end)
-          end)
-
-        {{new_x, new_y}, canvas}
-      end
-    )
-    |> elem(1)
-  end
+  # defp make_canvas({width, height}) do
+  #   Enum.map(0..height, fn _ ->
+  #     Enum.map(0..width, fn _ ->
+  #       "."
+  #     end)
+  #   end)
+  # end
+  #
+  # defp draw(instructions, canvas, origin) do
+  #   instructions
+  #   |> Enum.reduce(
+  #     {origin, canvas},
+  #     fn {dir, length}, {{x, y}, canvas} ->
+  #       {new_x, new_y} =
+  #         case dir do
+  #           :right -> {x + length, y}
+  #           :left -> {x - length, y}
+  #           :up -> {x, y - length}
+  #           :down -> {x, y + length}
+  #         end
+  #
+  #       left = min(x, new_x)
+  #       right = max(x, new_x)
+  #       top = min(y, new_y)
+  #       bottom = max(y, new_y)
+  #
+  #       canvas =
+  #         canvas
+  #         |> Enum.with_index()
+  #         |> Enum.map(fn {row, row_index} ->
+  #           row
+  #           |> Enum.with_index()
+  #           |> Enum.map(fn {el, col_index} ->
+  #             if col_index >= left && col_index <= right &&
+  #                  row_index >= top && row_index <= bottom do
+  #               "#"
+  #             else
+  #               el
+  #             end
+  #           end)
+  #         end)
+  #
+  #       {{new_x, new_y}, canvas}
+  #     end
+  #   )
+  #   |> elem(1)
+  # end
 
   def count_area(map) do
     (map ++ [Enum.at(map, -2)])
@@ -262,22 +262,21 @@ defmodule Day18.Day18 do
     |> Enum.sum()
   end
 
-
   # DEBUG
   #
-  defp to_file(drawing, file_path) do
-    drawing
-    |> Enum.map(fn row ->
-      row
-      |> Enum.join()
-    end)
-    |> Enum.join("\n")
-    |> then(fn content ->
-      File.write!(file_path, content)
-    end)
-
-    drawing
-  end
+  # defp to_file(drawing, file_path) do
+  #   drawing
+  #   |> Enum.map(fn row ->
+  #     row
+  #     |> Enum.join()
+  #   end)
+  #   |> Enum.join("\n")
+  #   |> then(fn content ->
+  #     File.write!(file_path, content)
+  #   end)
+  #
+  #   drawing
+  # end
 
   defp filter_lines({original_v_line_map, h_line_map}) do
     h_line_map
