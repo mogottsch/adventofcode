@@ -27,7 +27,8 @@ defmodule Aoc.MixProject do
       {:benchee, "~> 1.2.0"},
       {:number, "~> 1.0.4"},
       {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:heap, "~> 3.0.0"}
+      {:heap, "~> 3.0.0"},
+      {:nx, "~> 0.6.4"}
     ]
   end
 end

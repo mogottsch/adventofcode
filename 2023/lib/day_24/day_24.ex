@@ -1,4 +1,6 @@
 defmodule Day24.Day24 do
+  import Nx.Defn
+
   def parse_file(file_path) do
     file_path
     |> File.read!()
@@ -76,6 +78,38 @@ defmodule Day24.Day24 do
   end
 
   def part_b(input) do
-    # Your code here
+    input |> IO.inspect()
+
+    matrix_a =
+      create_matrix_a(input |> Enum.slice(0..2))
+      |> IO.inspect()
+
+    solve_linear_equations(matrix_a, [0, 0, 0, 0, 0, 0])
+    |> IO.inspect()
+  end
+
+  defp create_matrix_a([
+         {[p0x, p0y, p0z], [v0x, v0y, v0z]},
+         {[p1x, p1y, p1z], [v1x, v1y, v1z]},
+         {[p2x, p2y, p2z], [v2x, v2y, v2z]}
+       ]) do
+    [
+      [-(p1z - p0z), p1y - p0y, 0, -(v1z - v0z), 0, -(v1y - v0y)],
+      [p1z - p0z, 0, -(p1x - p0x), 0, -(v1z - v0z), v1x - v0x],
+      [0, -(p1y - p0y), p1x - p0x, v1y - v0y, v1x - v0x, 0],
+      [-(p2z - p0z), p2y - p0y, 0, -(v2z - v0z), 0, -(v2y - v0y)],
+      [p2z - p0z, 0, -(p2x - p0x), 0, -(v2z - v0z), v2x - v0x],
+      [0, -(p2y - p0y), p2x - p0x, v2y - v0y, v2x - v0x, 0]
+    ]
+  end
+
+  def solve_linear_equations(matrix_a, vector_b) do
+    a = Nx.tensor(matrix_a)
+    b = Nx.tensor(vector_b)
+
+    # Solving for x in Ax = b
+    x = Nx.LinAlg.solve(a, b)
+
+    Nx.to_flat_list(x)
   end
 end
