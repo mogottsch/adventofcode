@@ -18,6 +18,11 @@ mix run_day {day} {a|b} {example|input}
 mix benchmark
 ```
 
+### Run tests with hot code reload
+```
+mix test.watch ./test/day_{day}_test.exs
+```
+
 
 ## Benchmarks
 <!-- BENCHMARKS_START -->
