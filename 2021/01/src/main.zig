@@ -2,6 +2,65 @@ const std = @import("std");
 const testing = std.testing;
 const info = std.log.info;
 
+const ArgsParseError = error{
+    MissingPart,
+    MissingPath,
+    WrongPart,
+    PathDoesNotExist,
+};
+
+pub fn main() !void {
+    const allocator = std.heap.page_allocator;
+
+    var args = std.process.args();
+
+    _ = args.skip();
+
+    const partArg = args.next();
+    if (partArg == null) {
+        return ArgsParseError.MissingPart;
+    }
+
+    const Parts = enum { part_1, part_2 };
+    const maybePart = std.meta.stringToEnum(Parts, partArg.?);
+
+    if (maybePart == null) {
+        return ArgsParseError.WrongPart;
+    }
+    const part = maybePart.?;
+
+    const pathArg = args.next();
+    if (pathArg == null) {
+        return ArgsParseError.MissingPath;
+    }
+
+    if (!isValidPath(pathArg.?)) {
+        return ArgsParseError.PathDoesNotExist;
+    }
+
+    const input = try parse_file(allocator, pathArg.?);
+    defer allocator.free(input);
+
+    var result: ?i32 = null;
+    switch (part) {
+        .part_1 => {
+            info("Running part 1", .{});
+            result = try part_1(input);
+        },
+        .part_2 => {
+            info("Running part 2", .{});
+            result = part_2(input);
+        },
+    }
+
+    info("{d}", .{result.?});
+}
+
+fn isValidPath(path: []const u8) bool {
+    std.fs.cwd().access(path, .{}) catch return false;
+    return true;
+}
+
 pub fn parse_file(allocator: std.mem.Allocator, filepath: []const u8) ![]i32 {
     const file = try std.fs.cwd().openFile(filepath, .{});
     defer file.close();
@@ -21,49 +80,6 @@ pub fn parse_file(allocator: std.mem.Allocator, filepath: []const u8) ![]i32 {
     }
 
     return numbers;
-}
-
-pub fn main() !void {
-    const allocator = std.heap.page_allocator;
-
-    var args = std.process.args();
-
-    _ = args.skip();
-
-    while (true) {
-        const arg = args.next();
-        if (arg == null) break;
-
-        const Case = enum { part_1, part_2 };
-        const case = std.meta.stringToEnum(Case, arg.?);
-
-        if (case == null) {
-            info("Invalid argument: {s}. Valid arguments are: {s}", .{ arg.?, "part_1, part_2" });
-            return;
-        }
-
-        switch (case.?) {
-            .part_1 => {
-                info("Running part 1", .{});
-            },
-            .part_2 => {
-                info("Running part 2", .{});
-            },
-        }
-
-        // TODO: parse second argument as file path
-
-        info("{s}", .{arg.?});
-    }
-
-    // const numbers = try parse_file(allocator, "input.txt");
-    const numbers = try parse_file(allocator, "example_2.txt");
-    defer allocator.free(numbers);
-
-    // const n_increases = try part_1(numbers);
-    const n_increases = part_2(numbers);
-
-    info("{d}", .{n_increases});
 }
 
 pub fn part_1(numbers: []i32) !i32 {
