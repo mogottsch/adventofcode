@@ -2,7 +2,7 @@ const std = @import("std");
 const parse = @import("parse.zig");
 const testing = std.testing;
 
-pub fn run(numbers: []i32) i32 {
+pub fn run(numbers: []i32) !i32 {
     const n_lines = numbers.len;
     if (n_lines < 4) {
         return 0;

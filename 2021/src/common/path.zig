@@ -8,7 +8,7 @@ pub fn buildPath(path: []const u8) ![]const u8 {
 
     const allocator = std.heap.page_allocator;
 
-    const full_relative_path = try std.fs.path.join(allocator, &.{ "src", day_str, path });
+    const full_relative_path = try std.fs.path.join(allocator, &.{ "src", day_str, "data", path });
 
     const cwd_path = try std.fs.cwd().realpathAlloc(allocator, ".");
     defer allocator.free(cwd_path);
