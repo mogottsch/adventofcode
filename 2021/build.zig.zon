@@ -2,7 +2,12 @@
     .name = "advent-of-code-2021",
     .version = "0.0.0",
 
-    .dependencies = .{},
+    .dependencies = .{
+        .mustache = .{
+            .url = "git+https://github.com/batiati/mustache-zig#822933184fb0cbc8e692e9c73618deb2b0b8108c",
+            .hash = "122008747b05328191a1b3c2a83520b82f11e87ae12e2cc8f92305792203802a0b02",
+        },
+    },
 
     .paths = .{
         "build.zig",

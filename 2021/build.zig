@@ -125,6 +125,12 @@ fn addGenerateStep(
         .target = target,
         .optimize = optimize,
     });
+    const mustache = b.dependency("mustache", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    generate_exe.root_module.addImport("mustache", mustache.module("mustache"));
+
     b.installArtifact(generate_exe);
 
     const generate_cmd = b.addRunArtifact(generate_exe);

@@ -1,15 +1,23 @@
 const std = @import("std");
+const mustache = @import("mustache");
 
-const main_file_name = "main.zig";
-const parse_file_name = "parse.zig";
-const part_1_file_name = "part_1.zig";
-const part_2_file_name = "part_2.zig";
-
-const file_names = [_][]const u8{
-    main_file_name,
-    parse_file_name,
-    part_1_file_name,
-    part_2_file_name,
+const TemplatedFile = struct {
+    index: u32,
+    template_name: []const u8,
+    output_name: []const u8,
+};
+const parse_template = TemplatedFile{ .index = 1, .template_name = "parse.zig.mustache", .output_name = "parse.zig" };
+const main_template = TemplatedFile{ .index = 0, .template_name = "main.zig.mustache", .output_name = "main.zig" };
+const part_1_template = TemplatedFile{ .index = 2, .template_name = "part_1.zig.mustache", .output_name = "part_1.zig" };
+const part_2_template = TemplatedFile{ .index = 3, .template_name = "part_2.zig.mustache", .output_name = "part_2.zig" };
+const templated_files = [_]TemplatedFile{
+    main_template,
+    parse_template,
+    part_1_template,
+    part_2_template,
+};
+const Context = struct {
+    answer: ?i32,
 };
 
 pub fn main() !void {
@@ -34,31 +42,58 @@ pub fn main() !void {
 
     std.debug.print("Writing to {s}\n", .{output_dir_path});
 
-    // create the directory if it doesn't exist
     const cwd = std.fs.cwd();
     try cwd.makeDir(output_dir_path);
 
-    for (file_names) |file_name| {
-        const output_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ output_dir_path, file_name });
+    for (templated_files) |templated_file| {
+        const output_path = try std.fmt.allocPrint(
+            allocator,
+            "{s}/{s}",
+            .{ output_dir_path, templated_file.output_name },
+        );
         defer allocator.free(output_path);
 
-        // Create the file
-        var file = try cwd.createFile(output_path, .{});
-        defer file.close();
+        const template_content = try readTemplateFile(
+            allocator,
+            templated_file.template_name,
+        );
+        defer allocator.free(template_content);
 
-        // Generate content for the specific day
-        const content = try std.fmt.allocPrint(allocator,
-            \\const std = @import("std");
-            \\
-            \\pub fn main() !void {{
-            \\    std.debug.print("Day {d} solution", .{{{d}}});
-            \\}}
-        , .{ day, day });
+        const context = switch (templated_file.index) {
+            main_template.index => Context{ .answer = null },
+            parse_template.index => Context{ .answer = null },
+            part_1_template.index => Context{ .answer = 42 },
+            part_2_template.index => Context{ .answer = 43 },
+            else => unreachable,
+        };
+
+        const content = try mustache.allocRenderText(
+            allocator,
+            template_content,
+            context,
+        );
         defer allocator.free(content);
 
-        // Write the content to the file
+        var file = try cwd.createFile(output_path, .{});
+        defer file.close();
         try file.writeAll(content);
 
         std.debug.print("Generated source file at {s}\n", .{output_path});
     }
+}
+
+fn readTemplateFile(allocator: std.mem.Allocator, template_filename: []const u8) ![]const u8 {
+    const template_dir = "templates";
+    const template_path = try std.fmt.allocPrint(allocator, "{s}/{s}", .{ template_dir, template_filename });
+    defer allocator.free(template_path);
+
+    const file = std.fs.cwd().openFile(template_path, .{}) catch |err| {
+        if (err == error.FileNotFound) {
+            std.debug.print("Template file not found: {s}\n", .{template_path});
+        }
+        return err;
+    };
+    defer file.close();
+
+    return try file.readToEndAlloc(allocator, std.math.maxInt(usize));
 }

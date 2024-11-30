@@ -1,0 +1,18 @@
+const std = @import("std");
+const parse = @import("parse.zig");
+const testing = std.testing;
+
+pub fn run(numbers: []i32) !i32 {
+    // TODO
+}
+
+const EXAMPLE_ANSWER_2: i32 = {{answer}};
+
+test "part 2" {
+    const allocator = std.heap.page_allocator;
+    const input = try parse.parse_file(allocator, "example_2.txt");
+    defer allocator.free(input);
+
+    const result = run(input);
+    try testing.expectEqual(result, EXAMPLE_ANSWER_2);
+}
