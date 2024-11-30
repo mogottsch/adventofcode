@@ -6,7 +6,9 @@ pub fn buildPath(path: []const u8) ![]const u8 {
     var buffer: [10]u8 = undefined;
     const day_str = try std.fmt.bufPrint(&buffer, "{:0>2}", .{day});
 
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
 
     const full_relative_path = try std.fs.path.join(allocator, &.{ "src", day_str, "data", path });
 

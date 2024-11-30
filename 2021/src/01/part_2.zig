@@ -26,7 +26,9 @@ pub fn run(numbers: []i32) !i32 {
 const EXAMPLE_ANSWER_2: i32 = 5;
 
 test "part 2" {
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
     const numbers = try parse.parse_file(allocator, "example_2.txt");
     defer allocator.free(numbers);
 

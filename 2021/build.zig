@@ -131,6 +131,12 @@ fn addGenerateStep(
     });
     generate_exe.root_module.addImport("mustache", mustache.module("mustache"));
 
+    const rem = b.dependency("rem", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    generate_exe.root_module.addImport("rem", rem.module("rem"));
+
     b.installArtifact(generate_exe);
 
     const generate_cmd = b.addRunArtifact(generate_exe);
