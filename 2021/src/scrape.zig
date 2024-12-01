@@ -11,6 +11,8 @@ const DayData = struct {
     part_2_example_input: []const u8,
     part_1_example_answer: i32,
     part_2_example_answer: i32,
+    part_1_real_answer: i32,
+    part_2_real_answer: i32,
     allocator: std.mem.Allocator,
 
     pub fn deinit(self: *const DayData) void {
@@ -20,30 +22,54 @@ const DayData = struct {
     }
 };
 
-const CodeBlocks = struct {
-    blocks: [][]const u8,
+const ScrapedData = struct {
+    example_code_blocks: [][]const u8,
+    example_solutions: []const i32,
+
+    real_solutions: []const i32,
+
     allocator: std.mem.Allocator,
 
-    pub fn init(allocator: std.mem.Allocator, raw_blocks: []const []const u8) !CodeBlocks {
-        var blocks = try allocator.alloc([]u8, raw_blocks.len);
-        for (raw_blocks, 0..) |block, i| {
-            blocks[i] = try allocator.dupe(u8, block);
+    pub fn init(
+        allocator: std.mem.Allocator,
+        raw_example_code_blocks: []const []const u8,
+        raw_example_solutions: []const i32,
+        // raw_real_solutions: []const i32,
+    ) !ScrapedData {
+        std.debug.assert(raw_example_code_blocks.len == 1 or raw_example_code_blocks.len == 2);
+        std.debug.assert(raw_example_solutions.len == 1 or raw_example_solutions.len == 2);
+
+        var example_code_blocks = try allocator.alloc([]u8, raw_example_code_blocks.len);
+        for (raw_example_code_blocks, 0..) |block, i| {
+            example_code_blocks[i] = try allocator.dupe(u8, block);
         }
+
+        const raw_real_solutions = try allocator.alloc(i32, 2);
+
         return .{
-            .blocks = blocks,
+            .example_code_blocks = example_code_blocks,
+            .example_solutions = try allocator.dupe(i32, raw_example_solutions),
+            .real_solutions = raw_real_solutions,
+
             .allocator = allocator,
         };
     }
 
-    pub fn deinit(self: *const CodeBlocks) void {
-        for (self.blocks) |block| {
+    pub fn deinit(self: *const ScrapedData) void {
+        for (self.example_code_blocks) |block| {
             self.allocator.free(block);
         }
-        self.allocator.free(self.blocks);
+        self.allocator.free(self.example_code_blocks);
+        self.allocator.free(self.example_solutions);
+        self.allocator.free(self.real_solutions);
     }
 
-    pub fn getBlock(self: CodeBlocks, index: usize) []const u8 {
-        return if (index < self.blocks.len) self.blocks[index] else self.blocks[0];
+    pub fn getExampleCodeBlock(self: ScrapedData, index: usize) []const u8 {
+        return if (index < self.example_code_blocks.len) self.example_code_blocks[index] else self.example_code_blocks[0];
+    }
+
+    pub fn getExampleSolution(self: ScrapedData, index: usize) i32 {
+        return if (index < self.example_solutions.len) self.example_solutions[index] else self.example_solutions[0];
     }
 };
 
@@ -53,7 +79,7 @@ const Pages = enum {
 
     pub fn getPagePath(self: Pages) []const u8 {
         return switch (self) {
-            Pages.Main => "/",
+            Pages.Main => "",
             Pages.Input => "/input",
         };
     }
@@ -84,29 +110,34 @@ const AocUrl = struct {
 };
 
 pub fn scrapeDay(allocator: std.mem.Allocator, year: u32, day: u32) !DayData {
-    var client = Client{ .allocator = allocator };
-    defer client.deinit();
-
-    const input = try getInput(allocator, &client, year, day);
+    const input = try getInput(allocator, year, day);
     defer allocator.free(input);
 
-    const code_blocks = try getCodeBlocks(allocator, &client, year, day);
-    defer code_blocks.deinit();
+    const scraped_data = try scrapeData(allocator, year, day);
+    defer scraped_data.deinit();
 
-    const part_1_example_input = code_blocks.getBlock(0);
-    const part_2_example_input = code_blocks.getBlock(1);
+    // TODO: move this to init and add deinit
+    const part_1_example_input = try allocator.dupe(u8, scraped_data.getExampleCodeBlock(0));
+    const part_2_example_input = try allocator.dupe(u8, scraped_data.getExampleCodeBlock(1));
+    const part_1_example_answer = scraped_data.getExampleSolution(0);
+    const part_2_example_answer = scraped_data.getExampleSolution(1);
 
     return DayData{
         .input = try allocator.dupe(u8, input),
-        .part_1_example_input = try allocator.dupe(u8, part_1_example_input),
-        .part_2_example_input = try allocator.dupe(u8, part_2_example_input),
-        .part_1_example_answer = 0,
-        .part_2_example_answer = 0,
+        .part_1_example_input = part_1_example_input,
+        .part_2_example_input = part_2_example_input,
+        .part_1_example_answer = part_1_example_answer,
+        .part_2_example_answer = part_2_example_answer,
+        .part_1_real_answer = 0, // TODO: get real answer
+        .part_2_real_answer = 0,
         .allocator = allocator,
     };
 }
 
-fn getCodeBlocks(allocator: std.mem.Allocator, client: *Client, year: u32, day: u32) !CodeBlocks {
+fn scrapeData(allocator: std.mem.Allocator, year: u32, day: u32) !ScrapedData {
+    var client = Client{ .allocator = allocator };
+    defer client.deinit();
+
     const url = try AocUrl.init(allocator, year, day, Pages.Main);
     defer url.deinit();
 
@@ -121,14 +152,14 @@ fn getCodeBlocks(allocator: std.mem.Allocator, client: *Client, year: u32, day: 
     const res = try client.fetch(fetch_options);
 
     if (res.status != http.Status.ok) {
-        warn("Failed to fetch day {d} for year {d}: {d}", .{ day, year, res.status });
+        warn("Failed to fetch url {s}: {d}", .{ url.url_string, res.status });
         return error.FetchFailed;
     }
 
     const body = try response_data_array.toOwnedSlice();
     defer allocator.free(body);
 
-    var code_blocks_list = try extractCodeBlocks(allocator, body);
+    var code_blocks_list = try extractBetween(allocator, body, "<pre><code>", "</code></pre>");
     defer code_blocks_list.deinit();
     const code_blocks = try code_blocks_list.toOwnedSlice();
     defer allocator.free(code_blocks);
@@ -138,29 +169,45 @@ fn getCodeBlocks(allocator: std.mem.Allocator, client: *Client, year: u32, day: 
         return error.InvalidCodeBlockCount;
     }
 
-    return CodeBlocks.init(allocator, code_blocks);
+    var example_solutions_list = try extractBetween(allocator, body, "<code><em>", "</em></code>");
+    defer example_solutions_list.deinit();
+    const example_solutions = try example_solutions_list.toOwnedSlice();
+    defer allocator.free(example_solutions);
+
+    var example_solutions_ints = try allocator.alloc(i32, example_solutions.len);
+    defer allocator.free(example_solutions_ints);
+    for (example_solutions, 0..) |solution, i| {
+        example_solutions_ints[i] = try std.fmt.parseInt(i32, solution, 10);
+    }
+
+    return ScrapedData.init(allocator, code_blocks, example_solutions_ints);
 }
 
-fn extractCodeBlocks(allocator: std.mem.Allocator, text: []const u8) !std.ArrayList([]const u8) {
+fn extractBetween(
+    allocator: std.mem.Allocator,
+    text: []const u8,
+    start: []const u8,
+    end: []const u8,
+) !std.ArrayList([]const u8) {
     var results = std.ArrayList([]const u8).init(allocator);
 
-    const start_tag = "<pre><code>";
-    const end_tag = "</code></pre>";
-
     var rest = text;
-    while (std.mem.indexOf(u8, rest, start_tag)) |start_idx| {
-        const content_start = start_idx + start_tag.len;
-        if (std.mem.indexOf(u8, rest[content_start..], end_tag)) |end_idx| {
+    while (std.mem.indexOf(u8, rest, start)) |start_idx| {
+        const content_start = start_idx + start.len;
+        if (std.mem.indexOf(u8, rest[content_start..], end)) |end_idx| {
             const code = rest[content_start .. content_start + end_idx];
             try results.append(code);
-            rest = rest[content_start + end_idx + end_tag.len ..];
+            rest = rest[content_start + end_idx + end.len ..];
         }
     }
 
     return results;
 }
 
-fn getInput(allocator: std.mem.Allocator, client: *Client, year: u32, day: u32) ![]const u8 {
+fn getInput(allocator: std.mem.Allocator, year: u32, day: u32) ![]const u8 {
+    var client = Client{ .allocator = allocator };
+    defer client.deinit();
+
     const url = try AocUrl.init(allocator, year, day, Pages.Input);
     defer url.deinit();
 
