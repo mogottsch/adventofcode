@@ -116,6 +116,7 @@ fn addTestIfExists(
     test_exe.root_module.addImport("common", commonModule);
     test_exe.root_module.addOptions("config", options);
     addDependency(test_exe, b, "pretty", target, optimize);
+    addDependency(test_exe, b, "zbench", target, optimize);
 
     const run_test = b.addRunArtifact(test_exe);
     test_step.dependOn(&run_test.step);
