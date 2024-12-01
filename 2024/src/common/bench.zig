@@ -59,7 +59,29 @@ pub fn runBenchmarks(
     });
 
     const stdout = std.io.getStdOut().writer();
+    const bench_path = try path.buildPath(allocator, "bench_results.txt");
+    defer allocator.free(bench_path);
+    const file = try std.fs.createFileAbsolute(bench_path, .{});
+    defer file.close();
 
-    try stdout.writeAll("\n");
-    try bench.run(stdout);
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+
+    try zbench.prettyPrintHeader(stdout);
+    try zbench.prettyPrintHeader(file.writer());
+
+    var iter = try bench.iterator();
+    while (try iter.next()) |step| switch (step) {
+        .progress => |_| {},
+        .result => |x| {
+            defer x.deinit();
+
+            try x.prettyPrint(arena.allocator(), stdout, true);
+            try x.prettyPrint(arena.allocator(), file.writer(), false);
+            _ = arena.reset(.retain_capacity);
+        },
+    };
+
+    // try stdout.writeAll("\n");
+    // try bench.run(stdout);
 }

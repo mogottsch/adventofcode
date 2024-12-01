@@ -23,3 +23,10 @@ zig build test --summary all
 ```bash
 zig build generate -- 1
 ```
+
+
+## Run benchmark
+**For day 1**
+```bash
+zig build bench-1
+```
