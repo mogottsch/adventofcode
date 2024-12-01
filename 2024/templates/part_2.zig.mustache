@@ -2,6 +2,6 @@ const std = @import("std");
 const parse = @import("parse.zig");
 const testing = std.testing;
 
-pub fn run(input: parse.Input) !u32 {
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     return input.numbers[0];
 }

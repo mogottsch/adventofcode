@@ -12,7 +12,7 @@ test "part 2 example" {
     var input = try parse.parse_file(allocator, "example_2.txt");
     defer input.deinit();
 
-    const result = part_2.run(input);
+    const result = part_2.run(allocator, input);
     try testing.expectEqual(result, EXAMPLE_ANSWER_2);
 }
 
@@ -26,7 +26,7 @@ test "part 2 real" {
     var input = try parse.parse_file(allocator, "input.txt");
     defer input.deinit();
 
-    const result = part_2.run(input);
+    const result = part_2.run(allocator, input);
     try testing.expectEqual(result, REAL_ANSWER_2);
 }
 {{/real_answer}}

@@ -23,7 +23,7 @@ const main_template = TemplatedFile{
     .index = 0,
     .template_name = "main.zig.mustache",
     .output_name = "main.zig",
-    .should_overwrite = false,
+    .should_overwrite = true,
 };
 const part_1_template = TemplatedFile{
     .index = 2,

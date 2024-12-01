@@ -18,8 +18,8 @@ pub fn run(
     comptime InputType: type,
     comptime ReturnType: type,
     comptime parse_file: fn (allocator: std.mem.Allocator, path: []const u8) anyerror!InputType,
-    comptime run_part_1: fn (input: InputType) anyerror!ReturnType,
-    comptime run_part_2: fn (input: InputType) anyerror!ReturnType,
+    comptime run_part_1: fn (allocator: std.mem.Allocator, input: InputType) anyerror!ReturnType,
+    comptime run_part_2: fn (allocator: std.mem.Allocator, input: InputType) anyerror!ReturnType,
 ) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
@@ -33,11 +33,11 @@ pub fn run(
     switch (args.part) {
         .part_1 => {
             info("Running part 1", .{});
-            result = try run_part_1(input);
+            result = try run_part_1(allocator, input);
         },
         .part_2 => {
             info("Running part 2", .{});
-            result = try run_part_2(input);
+            result = try run_part_2(allocator, input);
         },
     }
 
