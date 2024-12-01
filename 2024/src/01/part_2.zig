@@ -3,7 +3,7 @@ const parse = @import("parse.zig");
 const testing = std.testing;
 const pretty = @import("pretty");
 
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+pub fn runWithHashMap(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     var map = std.AutoHashMap(u32, u32).init(allocator);
     defer map.deinit();
 
@@ -24,4 +24,24 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     }
 
     return similarity_score;
+}
+
+pub fn runWithArray(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+    _ = allocator;
+    var counts = [_]u32{0} ** 100000;
+
+    for (input.right) |number| {
+        counts[number] += 1;
+    }
+
+    var similarity_score: u32 = 0;
+    for (input.left) |number| {
+        similarity_score += counts[number] * number;
+    }
+
+    return similarity_score;
+}
+
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+    return runWithArray(allocator, input);
 }
