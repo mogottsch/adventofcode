@@ -2,6 +2,7 @@ const std = @import("std");
 const mustache = @import("mustache");
 const scrape = @import("scrape.zig");
 const config = @import("config");
+const pretty = @import("pretty");
 
 const log = std.log;
 
@@ -52,20 +53,24 @@ pub fn main() !void {
     const day_data = try scrape.fetchDayData(allocator, config.YEAR, day);
     defer day_data.deinit();
 
-    var buffer: [10]u8 = undefined; // TODO: Find a better way to do this
-    const output_dir_path = try std.fmt.bufPrint(&buffer, "src/{:0>2}", .{day});
+    try pretty.print(allocator, day_data, .{});
 
-    const cwd = std.fs.cwd();
-    try cwd.makeDir(output_dir_path);
+    return error.Ok;
 
-    for (templated_files) |templated_file| {
-        if (day_data.day_stage == scrape.DayStage.New and templated_file.index == part_2_template.index) {
-            continue;
-        }
-        try writeTemplatedFile(allocator, templated_file, output_dir_path, day_data);
-    }
-
-    try writeDataDir(allocator, output_dir_path, day_data);
+    // var buffer: [10]u8 = undefined; // TODO: Find a better way to do this
+    // const output_dir_path = try std.fmt.bufPrint(&buffer, "src/{:0>2}", .{day});
+    //
+    // const cwd = std.fs.cwd();
+    // try cwd.makeDir(output_dir_path);
+    //
+    // for (templated_files) |templated_file| {
+    //     if (day_data.day_stage == scrape.DayStage.New and templated_file.index == part_2_template.index) {
+    //         continue;
+    //     }
+    //     try writeTemplatedFile(allocator, templated_file, output_dir_path, day_data);
+    // }
+    //
+    // try writeDataDir(allocator, output_dir_path, day_data);
 }
 
 fn parseDayFromArgs() !u32 {

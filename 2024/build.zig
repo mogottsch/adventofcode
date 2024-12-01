@@ -130,17 +130,8 @@ fn addGenerateStep(
     options.addOption(u32, "YEAR", 2024);
     generate_exe.root_module.addOptions("config", options);
 
-    const mustache = b.dependency("mustache", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    generate_exe.root_module.addImport("mustache", mustache.module("mustache"));
-
-    const rem = b.dependency("rem", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    generate_exe.root_module.addImport("rem", rem.module("rem"));
+    addDependency(generate_exe, b, "mustache", target, optimize);
+    addDependency(generate_exe, b, "pretty", target, optimize);
 
     b.installArtifact(generate_exe);
 
@@ -154,4 +145,18 @@ fn addGenerateStep(
 
     const generate_step = b.step("generate", "Generate template source files for new day");
     generate_step.dependOn(&generate_cmd.step);
+}
+
+fn addDependency(
+    exe: *std.Build.Step.Compile,
+    b: *std.Build,
+    dep_name: []const u8,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) void {
+    const dep = b.dependency(dep_name, .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.root_module.addImport(dep_name, dep.module(dep_name));
 }

@@ -3,14 +3,8 @@ const testing = std.testing;
 const parse = @import("parse.zig");
 
 pub fn run(input: parse.Input) !u32 {
-    // std.debug.print("input left: {any}\n", .{input.left});
-    // std.debug.print("input right: {any}\n", .{input.right});
-
     std.mem.sort(i32, input.left, {}, comptime std.sort.asc(i32));
     std.mem.sort(i32, input.right, {}, comptime std.sort.asc(i32));
-
-    // std.debug.print("input left: {any}\n", .{input.left});
-    // std.debug.print("input right: {any}\n", .{input.right});
 
     var diff_sum: u32 = 0;
 
