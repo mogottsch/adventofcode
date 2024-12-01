@@ -1,0 +1,21 @@
+.{
+    .name = "advent-of-code-2021",
+    .version = "0.0.0",
+
+    .dependencies = .{
+        .mustache = .{
+            .url = "git+https://github.com/batiati/mustache-zig#822933184fb0cbc8e692e9c73618deb2b0b8108c",
+            .hash = "122008747b05328191a1b3c2a83520b82f11e87ae12e2cc8f92305792203802a0b02",
+        },
+        .rem = .{
+            .url = "git+https://github.com/chadwain/rem#68dcb476a9090c9bbe0044dd26914ee1266924ed",
+            .hash = "1220da547f973ec198c5a56c6a0c638c915d5d756209f66ef0f281948d4ac1bf6725",
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
