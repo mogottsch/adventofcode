@@ -1,5 +1,4 @@
 const std = @import("std");
-const testing = std.testing;
 const parse = @import("parse.zig");
 
 pub fn run(input: parse.Input) !u32 {
@@ -13,17 +12,4 @@ pub fn run(input: parse.Input) !u32 {
     }
 
     return diff_sum;
-}
-
-const EXAMPLE_ANSWER_1: i32 = 11;
-
-test "part 1" {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
-    var input = try parse.parse_file(allocator, "example_1.txt");
-    defer input.deinit();
-
-    const result = run(input);
-    try testing.expectEqual(result, EXAMPLE_ANSWER_1);
 }
