@@ -46,6 +46,7 @@ pub fn build(b: *std.Build) void {
         });
         exe.root_module.addImport("common", commonModule);
         exe.root_module.addOptions("config", options);
+        addDependency(exe, b, "pretty", target, optimize);
         b.installArtifact(exe);
 
         const run_cmd = b.addRunArtifact(exe);
@@ -114,6 +115,7 @@ fn addTestIfExists(
     });
     test_exe.root_module.addImport("common", commonModule);
     test_exe.root_module.addOptions("config", options);
+    addDependency(test_exe, b, "pretty", target, optimize);
 
     const run_test = b.addRunArtifact(test_exe);
     test_step.dependOn(&run_test.step);

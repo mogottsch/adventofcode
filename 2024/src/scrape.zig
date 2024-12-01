@@ -206,7 +206,7 @@ fn extractExampleSolutions(
             if (examples.strings.len == 0) return error.NoExampleSolutions;
             example_solution_1 = try std.fmt.parseInt(i32, examples.strings[examples.strings.len - 1], 10);
         },
-        .Part1Solved => {
+        .Part1Solved, .Part2Solved => {
             var parts_iter = std.mem.splitSequence(u8, body, PUZZLE_ANSWER_PREFIX);
 
             if (parts_iter.next()) |first_part| {
@@ -233,7 +233,6 @@ fn extractExampleSolutions(
                 );
             }
         },
-        .Part2Solved => return error.Unimplemented,
     }
 
     return .{ .solution_1 = example_solution_1, .solution_2 = example_solution_2 };
