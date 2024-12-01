@@ -2,11 +2,11 @@ const std = @import("std");
 const parse = @import("parse.zig");
 const testing = std.testing;
 
-pub fn run(numbers: []i32) !i32 {
+pub fn run(numbers: []u32) !u32 {
     return numbers[0];
 }
 
-const EXAMPLE_ANSWER_2: i32 = {{answer}};
+const EXAMPLE_ANSWER_2: u32 = {{answer}};
 
 test "part 2" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

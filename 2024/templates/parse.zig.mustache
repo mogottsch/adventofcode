@@ -2,7 +2,17 @@ const std = @import("std");
 const path = @import("common").path;
 const log = std.log;
 
-pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) ![]i32 {
+pub const Input = struct {
+    numbers: []u32,
+
+    allocator: std.mem.Allocator,
+
+    pub fn deinit(self: *Input) void {
+        self.allocator.free(self.numbers);
+    }
+};
+
+pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
     const filepath = try path.buildPath(allocator, filename);
     defer allocator.free(filepath);
     const file = try std.fs.openFileAbsolute(filepath, .{});
@@ -15,17 +25,17 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) ![]i32 {
         if (c == '\n') count += 1;
     }
 
-    const numbers = try allocator.alloc(i32, count);
+    const numbers = try allocator.alloc(u32, count);
     errdefer allocator.free(numbers);
 
     var line_iterator = std.mem.splitScalar(u8, content[0 .. content.len - 1], '\n');
     var i: usize = 0;
     while (line_iterator.next()) |line| : (i += 1) {
-        numbers[i] = std.fmt.parseInt(i32, line, 10) catch |err| {
+        numbers[i] = std.fmt.parseInt(u32, line, 10) catch |err| {
             log.err("Failed to parse line '{s}': {}", .{ line, err });
             return err;
         };
     }
 
-    return numbers;
+    return Input{ .numbers = numbers, .allocator = allocator };
 }

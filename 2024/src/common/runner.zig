@@ -15,20 +15,21 @@ const PartErrors = error{
 };
 
 pub fn run(
-    comptime T: type,
-    comptime parse_file: fn (allocator: std.mem.Allocator, path: []const u8) anyerror!T,
-    comptime run_part_1: fn (input: T) anyerror!i32,
-    comptime run_part_2: fn (input: T) anyerror!i32,
+    comptime InputType: type,
+    comptime ReturnType: type,
+    comptime parse_file: fn (allocator: std.mem.Allocator, path: []const u8) anyerror!InputType,
+    comptime run_part_1: fn (input: InputType) anyerror!ReturnType,
+    comptime run_part_2: fn (input: InputType) anyerror!ReturnType,
 ) !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
     const args = try argparse.parseArgs(allocator);
-    const input = try parse_file(allocator, args.path);
-    defer allocator.free(input);
+    var input = try parse_file(allocator, args.path);
+    defer input.deinit();
 
-    var result: ?i32 = null;
+    var result: ?ReturnType = null;
     switch (args.part) {
         .part_1 => {
             info("Running part 1", .{});
