@@ -125,6 +125,11 @@ fn addGenerateStep(
         .target = target,
         .optimize = optimize,
     });
+
+    const options = b.addOptions();
+    options.addOption(u32, "YEAR", 2024);
+    generate_exe.root_module.addOptions("config", options);
+
     const mustache = b.dependency("mustache", .{
         .target = target,
         .optimize = optimize,

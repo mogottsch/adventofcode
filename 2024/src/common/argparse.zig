@@ -12,7 +12,7 @@ const ArgsParseError = error{
 
 pub const Parts = enum { part_1, part_2 };
 
-pub fn parseArgs() !struct {
+pub fn parseArgs(allocator: std.mem.Allocator) !struct {
     part: Parts,
     path: []const u8,
 } {
@@ -37,7 +37,8 @@ pub fn parseArgs() !struct {
 
     const day = config.DAY;
     info("Day: {d}", .{day});
-    const path_with_day = try path.buildPath(path_arg.?);
+    const path_with_day = try path.buildPath(allocator, path_arg.?);
+    defer allocator.free(path_with_day);
     const is_valid_path = try path.isValidPath(path_with_day);
 
     if (!is_valid_path) {

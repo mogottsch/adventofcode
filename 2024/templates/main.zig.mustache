@@ -1,13 +1,22 @@
 const common = @import("common");
 const parse = @import("parse.zig");
 const part_1 = @import("part_1.zig");
+{{#part_2}}
 const part_2 = @import("part_2.zig");
+{{/part_2}}
+
+{{^part_2}}
+fn part_2_run(_: []i32) !i32 {
+    return error.Unimplemented;
+}
+{{/part_2}}
+
 
 pub fn main() !void {
     try common.run(
         []i32,
         parse.parse_file,
         part_1.run,
-        part_2.run,
+        {{#part_2}}part_2.run,{{/part_2}}{{^part_2}}part_2_run,{{/part_2}}
     );
 }

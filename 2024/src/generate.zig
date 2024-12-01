@@ -1,16 +1,35 @@
 const std = @import("std");
 const mustache = @import("mustache");
 const scrape = @import("scrape.zig");
+const config = @import("config");
+
+const log = std.log;
 
 const TemplatedFile = struct {
     index: u32,
     template_name: []const u8,
     output_name: []const u8,
 };
-const parse_template = TemplatedFile{ .index = 1, .template_name = "parse.zig.mustache", .output_name = "parse.zig" };
-const main_template = TemplatedFile{ .index = 0, .template_name = "main.zig.mustache", .output_name = "main.zig" };
-const part_1_template = TemplatedFile{ .index = 2, .template_name = "part_1.zig.mustache", .output_name = "part_1.zig" };
-const part_2_template = TemplatedFile{ .index = 3, .template_name = "part_2.zig.mustache", .output_name = "part_2.zig" };
+const parse_template = TemplatedFile{
+    .index = 1,
+    .template_name = "parse.zig.mustache",
+    .output_name = "parse.zig",
+};
+const main_template = TemplatedFile{
+    .index = 0,
+    .template_name = "main.zig.mustache",
+    .output_name = "main.zig",
+};
+const part_1_template = TemplatedFile{
+    .index = 2,
+    .template_name = "part_1.zig.mustache",
+    .output_name = "part_1.zig",
+};
+const part_2_template = TemplatedFile{
+    .index = 3,
+    .template_name = "part_2.zig.mustache",
+    .output_name = "part_2.zig",
+};
 const templated_files = [_]TemplatedFile{
     main_template,
     parse_template,
@@ -19,6 +38,7 @@ const templated_files = [_]TemplatedFile{
 };
 const Context = struct {
     answer: ?i32,
+    part_2: bool,
 };
 
 pub fn main() !void {
@@ -27,27 +47,25 @@ pub fn main() !void {
     defer _ = gpa.deinit();
 
     const day = try parseDayFromArgs();
-    std.debug.print("Generating day {d}\n", .{day});
+    log.info("Generating day {d}", .{day});
 
-    const day_data = try scrape.scrapeDay(allocator, 2021, day);
+    const day_data = try scrape.fetchDayData(allocator, config.YEAR, day);
     defer day_data.deinit();
-    std.debug.print(
-        "Input: {s}\nPart 1 example input: {s}\nPart 2 example input: {s}\nPart 1 example answer: {d}\nPart 2 example answer: {d}\n",
-        .{ day_data.input, day_data.part_1_example_input, day_data.part_2_example_input, day_data.part_1_example_answer, day_data.part_2_example_answer },
-    );
 
-    return error.Ok;
+    var buffer: [10]u8 = undefined; // TODO: Find a better way to do this
+    const output_dir_path = try std.fmt.bufPrint(&buffer, "src/{:0>2}", .{day});
 
-    // var buffer: [10]u8 = undefined;
-    // const output_dir_path = try std.fmt.bufPrint(&buffer, "src/{:0>2}", .{day});
-    // std.debug.print("Writing to {s}\n", .{output_dir_path});
-    //
-    // const cwd = std.fs.cwd();
-    // try cwd.makeDir(output_dir_path);
-    //
-    // for (templated_files) |templated_file| {
-    //     try writeTemplatedFile(allocator, templated_file, output_dir_path);
-    // }
+    const cwd = std.fs.cwd();
+    try cwd.makeDir(output_dir_path);
+
+    for (templated_files) |templated_file| {
+        if (day_data.day_stage == scrape.DayStage.New and templated_file.index == part_2_template.index) {
+            continue;
+        }
+        try writeTemplatedFile(allocator, templated_file, output_dir_path, day_data);
+    }
+
+    try writeDataDir(allocator, output_dir_path, day_data);
 }
 
 fn parseDayFromArgs() !u32 {
@@ -55,7 +73,7 @@ fn parseDayFromArgs() !u32 {
     _ = args.skip();
     const day_arg = args.next();
     if (day_arg == null) {
-        std.debug.print("Please provide a day number\n", .{});
+        log.err("Please provide a day number", .{});
         return error.MissingArgument;
     }
 
@@ -64,7 +82,12 @@ fn parseDayFromArgs() !u32 {
     return day;
 }
 
-fn writeTemplatedFile(allocator: std.mem.Allocator, templated_file: TemplatedFile, output_dir_path: []const u8) !void {
+fn writeTemplatedFile(
+    allocator: std.mem.Allocator,
+    templated_file: TemplatedFile,
+    output_dir_path: []const u8,
+    day_data: scrape.DayData,
+) !void {
     const output_path = try std.fmt.allocPrint(
         allocator,
         "{s}/{s}",
@@ -78,11 +101,13 @@ fn writeTemplatedFile(allocator: std.mem.Allocator, templated_file: TemplatedFil
     );
     defer allocator.free(template_content);
 
+    const part_2_available = day_data.day_stage != scrape.DayStage.New;
+
     const context = switch (templated_file.index) {
-        main_template.index => Context{ .answer = null },
-        parse_template.index => Context{ .answer = null },
-        part_1_template.index => Context{ .answer = 42 },
-        part_2_template.index => Context{ .answer = 43 },
+        main_template.index => Context{ .answer = null, .part_2 = part_2_available },
+        parse_template.index => Context{ .answer = null, .part_2 = part_2_available },
+        part_1_template.index => Context{ .answer = day_data.part_1_example_answer, .part_2 = part_2_available },
+        part_2_template.index => Context{ .answer = day_data.part_2_example_answer, .part_2 = part_2_available },
         else => unreachable,
     };
 
@@ -98,7 +123,42 @@ fn writeTemplatedFile(allocator: std.mem.Allocator, templated_file: TemplatedFil
     defer file.close();
     try file.writeAll(content);
 
-    std.debug.print("Generated source file at {s}\n", .{output_path});
+    log.info("Generated source file at {s}", .{output_path});
+}
+
+fn writeDataDir(allocator: std.mem.Allocator, output_dir_path: []const u8, day_data: scrape.DayData) !void {
+    const data_dir_path = try std.fmt.allocPrint(allocator, "{s}/data", .{output_dir_path});
+    defer allocator.free(data_dir_path);
+
+    const cwd = std.fs.cwd();
+    try cwd.makeDir(data_dir_path);
+
+    const example_1_path = try std.fmt.allocPrint(allocator, "{s}/example_1.txt", .{data_dir_path});
+    defer allocator.free(example_1_path);
+    const example_2_path = try std.fmt.allocPrint(allocator, "{s}/example_2.txt", .{data_dir_path});
+    defer allocator.free(example_2_path);
+    const input_path = try std.fmt.allocPrint(allocator, "{s}/input.txt", .{data_dir_path});
+    defer allocator.free(input_path);
+
+    var example_1_file = try cwd.createFile(example_1_path, .{});
+    defer example_1_file.close();
+    std.debug.assert(day_data.part_1_example_input.len > 0);
+    try example_1_file.writeAll(day_data.part_1_example_input);
+    log.info("Generated example 1 file at {s}", .{example_1_path});
+
+    if (day_data.part_2_example_input != null) {
+        var example_2_file = try cwd.createFile(example_2_path, .{});
+        defer example_2_file.close();
+        std.debug.assert(day_data.part_2_example_input.?.len > 0);
+        try example_2_file.writeAll(day_data.part_2_example_input.?);
+        log.info("Generated example 2 file at {s}", .{example_2_path});
+    }
+
+    var input_file = try cwd.createFile(input_path, .{});
+    defer input_file.close();
+    std.debug.assert(day_data.input.len > 0);
+    try input_file.writeAll(day_data.input);
+    log.info("Generated input file at {s}", .{input_path});
 }
 
 fn readTemplateFile(allocator: std.mem.Allocator, template_filename: []const u8) ![]const u8 {
@@ -108,7 +168,7 @@ fn readTemplateFile(allocator: std.mem.Allocator, template_filename: []const u8)
 
     const file = std.fs.cwd().openFile(template_path, .{}) catch |err| {
         if (err == error.FileNotFound) {
-            std.debug.print("Template file not found: {s}\n", .{template_path});
+            log.warn("Template file not found: {s}", .{template_path});
         }
         return err;
     };

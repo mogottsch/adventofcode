@@ -1,75 +1,52 @@
 const std = @import("std");
 const http = @import("std").http;
-// const rem = @import("rem");
+const testing = @import("std").testing;
 const Client = http.Client;
 
 const warn = std.log.warn;
 
-const DayData = struct {
+pub const DayStage = enum {
+    New,
+    Part1Solved,
+    Part2Solved,
+};
+
+pub const DayData = struct {
     input: []const u8,
     part_1_example_input: []const u8,
-    part_2_example_input: []const u8,
+    part_2_example_input: ?[]const u8,
     part_1_example_answer: i32,
-    part_2_example_answer: i32,
-    part_1_real_answer: i32,
-    part_2_real_answer: i32,
+    part_2_example_answer: ?i32,
+    part_1_real_answer: ?i32,
+    part_2_real_answer: ?i32,
+    day_stage: DayStage,
     allocator: std.mem.Allocator,
 
     pub fn deinit(self: *const DayData) void {
         self.allocator.free(self.input);
         self.allocator.free(self.part_1_example_input);
-        self.allocator.free(self.part_2_example_input);
+        if (self.part_2_example_input != null) {
+            self.allocator.free(self.part_2_example_input.?);
+        }
     }
 };
 
 const ScrapedData = struct {
-    example_code_blocks: [][]const u8,
-    example_solutions: []const i32,
-
-    real_solutions: []const i32,
+    example_1_code_block: []const u8,
+    example_2_code_block: ?[]const u8,
+    example_1_solution: i32,
+    example_2_solution: ?i32,
+    real_solution_1: ?i32,
+    real_solution_2: ?i32,
+    day_stage: DayStage,
 
     allocator: std.mem.Allocator,
 
-    pub fn init(
-        allocator: std.mem.Allocator,
-        raw_example_code_blocks: []const []const u8,
-        raw_example_solutions: []const i32,
-        // raw_real_solutions: []const i32,
-    ) !ScrapedData {
-        std.debug.assert(raw_example_code_blocks.len == 1 or raw_example_code_blocks.len == 2);
-        std.debug.assert(raw_example_solutions.len == 1 or raw_example_solutions.len == 2);
-
-        var example_code_blocks = try allocator.alloc([]u8, raw_example_code_blocks.len);
-        for (raw_example_code_blocks, 0..) |block, i| {
-            example_code_blocks[i] = try allocator.dupe(u8, block);
-        }
-
-        const raw_real_solutions = try allocator.alloc(i32, 2);
-
-        return .{
-            .example_code_blocks = example_code_blocks,
-            .example_solutions = try allocator.dupe(i32, raw_example_solutions),
-            .real_solutions = raw_real_solutions,
-
-            .allocator = allocator,
-        };
-    }
-
     pub fn deinit(self: *const ScrapedData) void {
-        for (self.example_code_blocks) |block| {
-            self.allocator.free(block);
+        self.allocator.free(self.example_1_code_block);
+        if (self.example_2_code_block != null) {
+            self.allocator.free(self.example_2_code_block);
         }
-        self.allocator.free(self.example_code_blocks);
-        self.allocator.free(self.example_solutions);
-        self.allocator.free(self.real_solutions);
-    }
-
-    pub fn getExampleCodeBlock(self: ScrapedData, index: usize) []const u8 {
-        return if (index < self.example_code_blocks.len) self.example_code_blocks[index] else self.example_code_blocks[0];
-    }
-
-    pub fn getExampleSolution(self: ScrapedData, index: usize) i32 {
-        return if (index < self.example_solutions.len) self.example_solutions[index] else self.example_solutions[0];
     }
 };
 
@@ -109,32 +86,48 @@ const AocUrl = struct {
     }
 };
 
-pub fn scrapeDay(allocator: std.mem.Allocator, year: u32, day: u32) !DayData {
+pub fn fetchDayData(allocator: std.mem.Allocator, year: u32, day: u32) !DayData {
     const input = try getInput(allocator, year, day);
-    defer allocator.free(input);
+    errdefer allocator.free(input);
 
-    const scraped_data = try scrapeData(allocator, year, day);
-    defer scraped_data.deinit();
-
-    // TODO: move this to init and add deinit
-    const part_1_example_input = try allocator.dupe(u8, scraped_data.getExampleCodeBlock(0));
-    const part_2_example_input = try allocator.dupe(u8, scraped_data.getExampleCodeBlock(1));
-    const part_1_example_answer = scraped_data.getExampleSolution(0);
-    const part_2_example_answer = scraped_data.getExampleSolution(1);
+    const scraped_data = try scrapeMainPage(allocator, year, day);
+    errdefer scraped_data.deinit();
 
     return DayData{
-        .input = try allocator.dupe(u8, input),
-        .part_1_example_input = part_1_example_input,
-        .part_2_example_input = part_2_example_input,
-        .part_1_example_answer = part_1_example_answer,
-        .part_2_example_answer = part_2_example_answer,
+        .input = input,
+        .part_1_example_input = scraped_data.example_1_code_block,
+        .part_2_example_input = scraped_data.example_2_code_block,
+        .part_1_example_answer = scraped_data.example_1_solution,
+        .part_2_example_answer = scraped_data.example_2_solution,
         .part_1_real_answer = 0, // TODO: get real answer
         .part_2_real_answer = 0,
+        .day_stage = scraped_data.day_stage,
         .allocator = allocator,
     };
 }
 
-fn scrapeData(allocator: std.mem.Allocator, year: u32, day: u32) !ScrapedData {
+fn scrapeMainPage(allocator: std.mem.Allocator, year: u32, day: u32) !ScrapedData {
+    const body = try fetchMainPageBody(allocator, year, day);
+    defer allocator.free(body);
+
+    const day_stage = try detectDayStage(body);
+    const code_blocks = try extractCodeBlocks(allocator, body, day_stage);
+    const solutions = try extractExampleSolutions(allocator, body, day_stage);
+
+    return ScrapedData{
+        .example_1_code_block = code_blocks.example_1,
+        .example_2_code_block = code_blocks.example_2,
+        .example_1_solution = solutions.solution_1,
+        .example_2_solution = solutions.solution_2,
+        .real_solution_1 = null,
+        .real_solution_2 = null,
+        .day_stage = day_stage,
+        .allocator = allocator,
+    };
+}
+
+fn fetchMainPageBody(allocator: std.mem.Allocator, year: u32, day: u32) ![]const u8 {
+    // TODO: refactor this to reuse the request logic
     var client = Client{ .allocator = allocator };
     defer client.deinit();
 
@@ -156,39 +149,120 @@ fn scrapeData(allocator: std.mem.Allocator, year: u32, day: u32) !ScrapedData {
         return error.FetchFailed;
     }
 
-    const body = try response_data_array.toOwnedSlice();
-    defer allocator.free(body);
+    return response_data_array.toOwnedSlice();
+}
 
-    var code_blocks_list = try extractBetween(allocator, body, "<pre><code>", "</code></pre>");
-    defer code_blocks_list.deinit();
-    const code_blocks = try code_blocks_list.toOwnedSlice();
-    defer allocator.free(code_blocks);
+fn detectDayStage(text: []const u8) !DayStage {
+    var count: u32 = 0;
+    var last_idx: usize = 0;
 
-    if (code_blocks.len != 1 and code_blocks.len != 2) {
-        warn("Expected 1 or 2 code blocks, found {d}", .{code_blocks.len});
+    while (true) {
+        const idx = std.mem.indexOfPos(u8, text, last_idx, "Your puzzle answer was");
+        if (idx == null) {
+            break;
+        }
+        last_idx = idx.? + 1;
+        count += 1;
+    }
+
+    return switch (count) {
+        0 => DayStage.New,
+        1 => DayStage.Part1Solved,
+        2 => DayStage.Part2Solved,
+        else => error.InvalidDayStage,
+    };
+}
+
+fn extractCodeBlocks(
+    allocator: std.mem.Allocator,
+    body: []const u8,
+    day_stage: DayStage,
+) !struct { example_1: []const u8, example_2: ?[]const u8 } {
+    var code_blocks = try extractBetween(allocator, body, "<pre><code>", "</code></pre>");
+    defer code_blocks.deinit();
+
+    if (day_stage == DayStage.New and code_blocks.strings.len != 1) {
+        warn("Expected 1 code block for a new day, got {d}", .{code_blocks.strings.len});
+        return error.InvalidCodeBlockCount;
+    }
+    if (day_stage != DayStage.New and code_blocks.strings.len != 2) {
+        warn("Expected 2 code blocks for a part 1 or part 2 solved day, got {d}", .{code_blocks.strings.len});
         return error.InvalidCodeBlockCount;
     }
 
-    var example_solutions_list = try extractBetween(allocator, body, "<code><em>", "</em></code>");
-    defer example_solutions_list.deinit();
-    const example_solutions = try example_solutions_list.toOwnedSlice();
-    defer allocator.free(example_solutions);
+    const example_1 = try allocator.dupe(u8, code_blocks.strings[0]);
+    const example_2 = if (code_blocks.strings.len == 2) try allocator.dupe(u8, code_blocks.strings[1]) else null;
 
-    var example_solutions_ints = try allocator.alloc(i32, example_solutions.len);
-    defer allocator.free(example_solutions_ints);
-    for (example_solutions, 0..) |solution, i| {
-        example_solutions_ints[i] = try std.fmt.parseInt(i32, solution, 10);
+    return .{ .example_1 = example_1, .example_2 = example_2 };
+}
+
+fn extractExampleSolutions(
+    allocator: std.mem.Allocator,
+    body: []const u8,
+    day_stage: DayStage,
+) !struct { solution_1: i32, solution_2: ?i32 } {
+    var example_solution_1: i32 = 0;
+    var example_solution_2: ?i32 = null;
+
+    switch (day_stage) {
+        .New => {
+            const examples = try extractBetween(allocator, body, "<code><em>", "</em></code>");
+            defer examples.deinit();
+
+            if (examples.strings.len == 0) return error.NoExampleSolutions;
+            example_solution_1 = try std.fmt.parseInt(i32, examples.strings[examples.strings.len - 1], 10);
+        },
+        .Part1Solved => {
+            var parts_iter = std.mem.splitSequence(u8, body, "Your puzzle answer was");
+
+            if (parts_iter.next()) |first_part| {
+                const first_examples = try extractBetween(allocator, first_part, "<code><em>", "</em></code>");
+                defer first_examples.deinit();
+
+                if (first_examples.strings.len == 0) return error.NoExampleSolutions;
+                example_solution_1 = try std.fmt.parseInt(
+                    i32,
+                    first_examples.strings[first_examples.strings.len - 1],
+                    10,
+                );
+            }
+
+            if (parts_iter.next()) |second_part| {
+                const second_examples = try extractBetween(allocator, second_part, "<code><em>", "</em></code>");
+                defer second_examples.deinit();
+
+                if (second_examples.strings.len > 0) return error.NoExampleSolutions;
+                example_solution_2 = try std.fmt.parseInt(
+                    i32,
+                    second_examples.strings[second_examples.strings.len - 1],
+                    10,
+                );
+            }
+        },
+        .Part2Solved => return error.Unimplemented,
     }
 
-    return ScrapedData.init(allocator, code_blocks, example_solutions_ints);
+    return .{ .solution_1 = example_solution_1, .solution_2 = example_solution_2 };
 }
+
+const ExtractedStrings = struct {
+    strings: [][]const u8,
+    allocator: std.mem.Allocator,
+
+    pub fn deinit(self: *const ExtractedStrings) void {
+        for (self.strings) |str| {
+            self.allocator.free(str);
+        }
+        self.allocator.free(self.strings);
+    }
+};
 
 fn extractBetween(
     allocator: std.mem.Allocator,
     text: []const u8,
     start: []const u8,
     end: []const u8,
-) !std.ArrayList([]const u8) {
+) !ExtractedStrings {
     var results = std.ArrayList([]const u8).init(allocator);
 
     var rest = text;
@@ -196,12 +270,15 @@ fn extractBetween(
         const content_start = start_idx + start.len;
         if (std.mem.indexOf(u8, rest[content_start..], end)) |end_idx| {
             const code = rest[content_start .. content_start + end_idx];
-            try results.append(code);
+            try results.append(try allocator.dupe(u8, code));
             rest = rest[content_start + end_idx + end.len ..];
         }
     }
 
-    return results;
+    return ExtractedStrings{
+        .strings = try results.toOwnedSlice(),
+        .allocator = allocator,
+    };
 }
 
 fn getInput(allocator: std.mem.Allocator, year: u32, day: u32) ![]const u8 {
@@ -259,4 +336,11 @@ fn readCookieFromEnv(allocator: std.mem.Allocator) ![]const u8 {
     }
 
     return try allocator.dupe(u8, cookie.?);
+}
+
+test "detectDayStage" {
+    try testing.expectEqual(DayStage.New, try detectDayStage("Some text without any answers"));
+    try testing.expectEqual(DayStage.Part1Solved, try detectDayStage("Some text Your puzzle answer was 42"));
+    try testing.expectEqual(DayStage.Part2Solved, try detectDayStage("Your puzzle answer was 42. Later: Your puzzle answer was 123"));
+    try testing.expectError(error.InvalidDayStage, detectDayStage("Your puzzle answer was 1 Your puzzle answer was 2 Your puzzle answer was 3"));
 }

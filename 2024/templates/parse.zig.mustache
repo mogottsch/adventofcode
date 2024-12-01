@@ -1,11 +1,14 @@
 const std = @import("std");
 const path = @import("common").path;
+const log = std.log;
 
 pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) ![]i32 {
-    const filepath = try path.buildPath(filename);
+    const filepath = try path.buildPath(allocator, filename);
+    defer allocator.free(filepath);
     const file = try std.fs.openFileAbsolute(filepath, .{});
     defer file.close();
     const content = try file.readToEndAlloc(allocator, std.math.maxInt(usize));
+    defer allocator.free(content);
 
     var count: usize = 0;
     for (content) |c| {
@@ -13,6 +16,16 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) ![]i32 {
     }
 
     const numbers = try allocator.alloc(i32, count);
+    errdefer allocator.free(numbers);
 
     var line_iterator = std.mem.splitScalar(u8, content[0 .. content.len - 1], '\n');
+    var i: usize = 0;
+    while (line_iterator.next()) |line| : (i += 1) {
+        numbers[i] = std.fmt.parseInt(i32, line, 10) catch |err| {
+            log.err("Failed to parse line '{s}': {}", .{ line, err });
+            return err;
+        };
+    }
+
+    return numbers;
 }

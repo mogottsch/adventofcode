@@ -20,9 +20,11 @@ pub fn run(
     comptime run_part_1: fn (input: T) anyerror!i32,
     comptime run_part_2: fn (input: T) anyerror!i32,
 ) !void {
-    const allocator = std.heap.page_allocator;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
 
-    const args = try argparse.parseArgs();
+    const args = try argparse.parseArgs(allocator);
     const input = try parse_file(allocator, args.path);
     defer allocator.free(input);
 
