@@ -37,6 +37,7 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("src/common/common.zig"),
         });
         commonModule.addOptions("config", options);
+        addDependencyToModule(commonModule, b, "zbench", target, optimize);
 
         const exe = b.addExecutable(.{
             .name = b.fmt("{:0>2}", .{day_num}),
@@ -46,7 +47,7 @@ pub fn build(b: *std.Build) void {
         });
         exe.root_module.addImport("common", commonModule);
         exe.root_module.addOptions("config", options);
-        addDependency(exe, b, "pretty", target, optimize);
+        addDependencyToExe(exe, b, "pretty", target, optimize);
         b.installArtifact(exe);
 
         const run_cmd = b.addRunArtifact(exe);
@@ -83,6 +84,20 @@ pub fn build(b: *std.Build) void {
                 test_step,
             );
         }
+        const bench_step = b.step(
+            b.fmt("bench-{d}", .{day_num}),
+            b.fmt("Run benchmarks for day {d}", .{day_num}),
+        );
+        addBenchIfExists(
+            b,
+            day_num,
+            "bench.zig",
+            target,
+            optimize,
+            commonModule,
+            options,
+            bench_step,
+        );
     }
 }
 
@@ -115,8 +130,8 @@ fn addTestIfExists(
     });
     test_exe.root_module.addImport("common", commonModule);
     test_exe.root_module.addOptions("config", options);
-    addDependency(test_exe, b, "pretty", target, optimize);
-    addDependency(test_exe, b, "zbench", target, optimize);
+    addDependencyToExe(test_exe, b, "pretty", target, optimize);
+    addDependencyToExe(test_exe, b, "zbench", target, optimize);
 
     const run_test = b.addRunArtifact(test_exe);
     test_step.dependOn(&run_test.step);
@@ -138,8 +153,8 @@ fn addGenerateStep(
     options.addOption(u32, "YEAR", 2024);
     generate_exe.root_module.addOptions("config", options);
 
-    addDependency(generate_exe, b, "mustache", target, optimize);
-    addDependency(generate_exe, b, "pretty", target, optimize);
+    addDependencyToExe(generate_exe, b, "mustache", target, optimize);
+    addDependencyToExe(generate_exe, b, "pretty", target, optimize);
 
     b.installArtifact(generate_exe);
 
@@ -155,7 +170,43 @@ fn addGenerateStep(
     generate_step.dependOn(&generate_cmd.step);
 }
 
-fn addDependency(
+fn addBenchIfExists(
+    b: *std.Build,
+    day_num: u8,
+    bench_file: []const u8,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    commonModule: *std.Build.Module,
+    options: *std.Build.Step.Options,
+    bench_step: *std.Build.Step,
+) void {
+    const bench_path = b.fmt("src/{:0>2}/{s}", .{ day_num, bench_file });
+    const cwd = std.fs.cwd();
+
+    var file_exists = true;
+    cwd.access(bench_path, .{}) catch {
+        file_exists = false;
+    };
+
+    if (!file_exists) {
+        return;
+    }
+    const bench_exe = b.addExecutable(.{
+        .name = b.fmt("bench-day_{d}-{s}", .{ day_num, bench_file }),
+        .root_source_file = b.path(bench_path),
+        .target = target,
+        .optimize = optimize,
+    });
+    bench_exe.root_module.addImport("common", commonModule);
+    bench_exe.root_module.addOptions("config", options);
+    addDependencyToExe(bench_exe, b, "pretty", target, optimize);
+    addDependencyToExe(bench_exe, b, "zbench", target, optimize);
+
+    const run_bench = b.addRunArtifact(bench_exe);
+    bench_step.dependOn(&run_bench.step);
+}
+
+fn addDependencyToExe(
     exe: *std.Build.Step.Compile,
     b: *std.Build,
     dep_name: []const u8,
@@ -167,4 +218,18 @@ fn addDependency(
         .optimize = optimize,
     });
     exe.root_module.addImport(dep_name, dep.module(dep_name));
+}
+
+fn addDependencyToModule(
+    module: *std.Build.Module,
+    b: *std.Build,
+    dep_name: []const u8,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) void {
+    const dep = b.dependency(dep_name, .{
+        .target = target,
+        .optimize = optimize,
+    });
+    module.addImport(dep_name, dep.module(dep_name));
 }

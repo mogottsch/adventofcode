@@ -14,13 +14,13 @@ const TemplatedFile = struct {
     should_overwrite: bool,
 };
 const parse_template = TemplatedFile{
-    .index = 1,
+    .index = 0,
     .template_name = "parse.zig.mustache",
     .output_name = "parse.zig",
     .should_overwrite = false,
 };
 const main_template = TemplatedFile{
-    .index = 0,
+    .index = 1,
     .template_name = "main.zig.mustache",
     .output_name = "main.zig",
     .should_overwrite = true,
@@ -32,21 +32,27 @@ const part_1_template = TemplatedFile{
     .should_overwrite = false,
 };
 const part_1_test_template = TemplatedFile{
-    .index = 2,
+    .index = 3,
     .template_name = "part_1_test.zig.mustache",
     .output_name = "part_1_test.zig",
     .should_overwrite = true,
 };
 const part_2_template = TemplatedFile{
-    .index = 3,
+    .index = 4,
     .template_name = "part_2.zig.mustache",
     .output_name = "part_2.zig",
     .should_overwrite = false,
 };
 const part_2_test_template = TemplatedFile{
-    .index = 3,
+    .index = 5,
     .template_name = "part_2_test.zig.mustache",
     .output_name = "part_2_test.zig",
+    .should_overwrite = true,
+};
+const bench_template = TemplatedFile{
+    .index = 6,
+    .template_name = "bench.zig.mustache",
+    .output_name = "bench.zig",
     .should_overwrite = true,
 };
 const templated_files = [_]TemplatedFile{
@@ -56,6 +62,7 @@ const templated_files = [_]TemplatedFile{
     part_1_test_template,
     part_2_template,
     part_2_test_template,
+    bench_template,
 };
 
 // TODO: somehow split this up into multiple structs
