@@ -3,6 +3,7 @@ const mustache = @import("mustache");
 const scrape = @import("scrape.zig");
 const config = @import("config");
 const pretty = @import("pretty");
+const cwd = std.fs.cwd();
 
 const log = std.log;
 
@@ -10,36 +11,59 @@ const TemplatedFile = struct {
     index: u32,
     template_name: []const u8,
     output_name: []const u8,
+    should_overwrite: bool,
 };
 const parse_template = TemplatedFile{
     .index = 1,
     .template_name = "parse.zig.mustache",
     .output_name = "parse.zig",
+    .should_overwrite = false,
 };
 const main_template = TemplatedFile{
     .index = 0,
     .template_name = "main.zig.mustache",
     .output_name = "main.zig",
+    .should_overwrite = false,
 };
 const part_1_template = TemplatedFile{
     .index = 2,
     .template_name = "part_1.zig.mustache",
     .output_name = "part_1.zig",
+    .should_overwrite = false,
+};
+const part_1_test_template = TemplatedFile{
+    .index = 2,
+    .template_name = "part_1_test.zig.mustache",
+    .output_name = "part_1_test.zig",
+    .should_overwrite = true,
 };
 const part_2_template = TemplatedFile{
     .index = 3,
     .template_name = "part_2.zig.mustache",
     .output_name = "part_2.zig",
+    .should_overwrite = false,
+};
+const part_2_test_template = TemplatedFile{
+    .index = 3,
+    .template_name = "part_2_test.zig.mustache",
+    .output_name = "part_2_test.zig",
+    .should_overwrite = true,
 };
 const templated_files = [_]TemplatedFile{
     main_template,
     parse_template,
     part_1_template,
+    part_1_test_template,
     part_2_template,
+    part_2_test_template,
 };
+
+// TODO: somehow split this up into multiple structs
 const Context = struct {
-    answer: ?i32,
     part_2: bool,
+
+    example_answer: ?i32,
+    real_answer: ?i32,
 };
 
 pub fn main() !void {
@@ -53,24 +77,23 @@ pub fn main() !void {
     const day_data = try scrape.fetchDayData(allocator, config.YEAR, day);
     defer day_data.deinit();
 
-    try pretty.print(allocator, day_data, .{});
+    // try pretty.print(allocator, day_data, .{});
 
-    return error.Ok;
+    const output_dir_path = try std.fmt.allocPrint(allocator, "src/{:0>2}", .{day});
+    defer allocator.free(output_dir_path);
 
-    // var buffer: [10]u8 = undefined; // TODO: Find a better way to do this
-    // const output_dir_path = try std.fmt.bufPrint(&buffer, "src/{:0>2}", .{day});
-    //
-    // const cwd = std.fs.cwd();
-    // try cwd.makeDir(output_dir_path);
-    //
-    // for (templated_files) |templated_file| {
-    //     if (day_data.day_stage == scrape.DayStage.New and templated_file.index == part_2_template.index) {
-    //         continue;
-    //     }
-    //     try writeTemplatedFile(allocator, templated_file, output_dir_path, day_data);
-    // }
-    //
-    // try writeDataDir(allocator, output_dir_path, day_data);
+    cwd.makeDir(output_dir_path) catch |err| {
+        if (err != error.PathAlreadyExists) return err;
+    };
+
+    for (templated_files) |templated_file| {
+        if (day_data.day_stage == scrape.DayStage.New and templated_file.index == part_2_template.index) {
+            continue;
+        }
+        try writeTemplatedFile(allocator, templated_file, output_dir_path, day_data);
+    }
+
+    try writeDataDir(allocator, output_dir_path, day_data);
 }
 
 fn parseDayFromArgs() !u32 {
@@ -100,6 +123,16 @@ fn writeTemplatedFile(
     );
     defer allocator.free(output_path);
 
+    if (try checkFileExists(output_path)) {
+        if (!templated_file.should_overwrite) {
+            log.info("File already exists at {s}, skipping", .{output_path});
+            return;
+        }
+
+        log.info("Overwriting file at {s}", .{output_path});
+        try cwd.deleteFile(output_path);
+    }
+
     const template_content = try readTemplateFile(
         allocator,
         templated_file.template_name,
@@ -109,10 +142,26 @@ fn writeTemplatedFile(
     const part_2_available = day_data.day_stage != scrape.DayStage.New;
 
     const context = switch (templated_file.index) {
-        main_template.index => Context{ .answer = null, .part_2 = part_2_available },
-        parse_template.index => Context{ .answer = null, .part_2 = part_2_available },
-        part_1_template.index => Context{ .answer = day_data.part_1_example_answer, .part_2 = part_2_available },
-        part_2_template.index => Context{ .answer = day_data.part_2_example_answer, .part_2 = part_2_available },
+        main_template.index => Context{
+            .real_answer = null,
+            .example_answer = null,
+            .part_2 = part_2_available,
+        },
+        parse_template.index => Context{
+            .real_answer = null,
+            .example_answer = null,
+            .part_2 = part_2_available,
+        },
+        part_1_template.index => Context{
+            .real_answer = day_data.part_1_real_answer,
+            .example_answer = day_data.part_1_example_answer,
+            .part_2 = part_2_available,
+        },
+        part_2_template.index => Context{
+            .real_answer = day_data.part_2_real_answer,
+            .example_answer = day_data.part_2_example_answer,
+            .part_2 = part_2_available,
+        },
         else => unreachable,
     };
 
@@ -123,7 +172,6 @@ fn writeTemplatedFile(
     );
     defer allocator.free(content);
 
-    const cwd = std.fs.cwd();
     var file = try cwd.createFile(output_path, .{});
     defer file.close();
     try file.writeAll(content);
@@ -135,8 +183,9 @@ fn writeDataDir(allocator: std.mem.Allocator, output_dir_path: []const u8, day_d
     const data_dir_path = try std.fmt.allocPrint(allocator, "{s}/data", .{output_dir_path});
     defer allocator.free(data_dir_path);
 
-    const cwd = std.fs.cwd();
-    try cwd.makeDir(data_dir_path);
+    cwd.makeDir(data_dir_path) catch |err| {
+        if (err != error.PathAlreadyExists) return err;
+    };
 
     const example_1_path = try std.fmt.allocPrint(allocator, "{s}/example_1.txt", .{data_dir_path});
     defer allocator.free(example_1_path);
@@ -145,13 +194,15 @@ fn writeDataDir(allocator: std.mem.Allocator, output_dir_path: []const u8, day_d
     const input_path = try std.fmt.allocPrint(allocator, "{s}/input.txt", .{data_dir_path});
     defer allocator.free(input_path);
 
-    var example_1_file = try cwd.createFile(example_1_path, .{});
-    defer example_1_file.close();
-    std.debug.assert(day_data.part_1_example_input.len > 0);
-    try example_1_file.writeAll(day_data.part_1_example_input);
-    log.info("Generated example 1 file at {s}", .{example_1_path});
+    if (!try checkFileExists(example_1_path)) {
+        var example_1_file = try cwd.createFile(example_1_path, .{});
+        defer example_1_file.close();
+        std.debug.assert(day_data.part_1_example_input.len > 0);
+        try example_1_file.writeAll(day_data.part_1_example_input);
+        log.info("Generated example 1 file at {s}", .{example_1_path});
+    }
 
-    if (day_data.part_2_example_input != null) {
+    if (!try checkFileExists(example_2_path) and day_data.part_2_example_input != null) {
         var example_2_file = try cwd.createFile(example_2_path, .{});
         defer example_2_file.close();
         std.debug.assert(day_data.part_2_example_input.?.len > 0);
@@ -159,11 +210,13 @@ fn writeDataDir(allocator: std.mem.Allocator, output_dir_path: []const u8, day_d
         log.info("Generated example 2 file at {s}", .{example_2_path});
     }
 
-    var input_file = try cwd.createFile(input_path, .{});
-    defer input_file.close();
-    std.debug.assert(day_data.input.len > 0);
-    try input_file.writeAll(day_data.input);
-    log.info("Generated input file at {s}", .{input_path});
+    if (!try checkFileExists(input_path)) {
+        var input_file = try cwd.createFile(input_path, .{});
+        defer input_file.close();
+        std.debug.assert(day_data.input.len > 0);
+        try input_file.writeAll(day_data.input);
+        log.info("Generated input file at {s}", .{input_path});
+    }
 }
 
 fn readTemplateFile(allocator: std.mem.Allocator, template_filename: []const u8) ![]const u8 {
@@ -180,4 +233,15 @@ fn readTemplateFile(allocator: std.mem.Allocator, template_filename: []const u8)
     defer file.close();
 
     return try file.readToEndAlloc(allocator, std.math.maxInt(usize));
+}
+
+fn checkFileExists(output_path: []const u8) !bool {
+    if (cwd.access(output_path, .{})) |_| {
+        return true;
+    } else |err| {
+        if (err == error.FileNotFound) {
+            return false;
+        }
+        return err;
+    }
 }

@@ -3,8 +3,8 @@ const config = @import("config");
 
 pub fn buildPath(allocator: std.mem.Allocator, path: []const u8) ![]const u8 {
     const day = config.DAY;
-    var buffer: [10]u8 = undefined;
-    const day_str = try std.fmt.bufPrint(&buffer, "{:0>2}", .{day});
+    const day_str = try std.fmt.allocPrint(allocator, "{:0>2}", .{day});
+    defer allocator.free(day_str);
 
     const full_relative_path = try std.fs.path.join(allocator, &.{ "src", day_str, "data", path });
     defer allocator.free(full_relative_path);

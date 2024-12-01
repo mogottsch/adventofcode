@@ -64,7 +64,13 @@ pub fn build(b: *std.Build) void {
             b.fmt("Run tests for day {d}", .{day_num}),
         );
 
-        inline for ([_][]const u8{ "part_1.zig", "part_2.zig", "parse.zig" }) |test_file| {
+        inline for ([_][]const u8{
+            "part_1.zig",
+            "part_1_test.zig",
+            "part_2.zig",
+            "part_2_test.zig",
+            "parse.zig",
+        }) |test_file| {
             addTestIfExists(
                 b,
                 day_num,
@@ -97,21 +103,20 @@ fn addTestIfExists(
         file_exists = false;
     };
 
-    if (file_exists) {
-        const test_exe = b.addTest(.{
-            .name = b.fmt("test-day_{d}-{s}", .{ day_num, test_file }),
-            .root_source_file = b.path(test_path),
-            .target = target,
-            .optimize = optimize,
-        });
-        test_exe.root_module.addImport("common", commonModule);
-        test_exe.root_module.addOptions("config", options);
-
-        const run_test = b.addRunArtifact(test_exe);
-        test_step.dependOn(&run_test.step);
-    } else {
-        warn("Could not find test file for day {d}: {s}", .{ day_num, test_file });
+    if (!file_exists) {
+        return;
     }
+    const test_exe = b.addTest(.{
+        .name = b.fmt("test-day_{d}-{s}", .{ day_num, test_file }),
+        .root_source_file = b.path(test_path),
+        .target = target,
+        .optimize = optimize,
+    });
+    test_exe.root_module.addImport("common", commonModule);
+    test_exe.root_module.addOptions("config", options);
+
+    const run_test = b.addRunArtifact(test_exe);
+    test_step.dependOn(&run_test.step);
 }
 
 fn addGenerateStep(
