@@ -94,7 +94,9 @@ pub fn main() !void {
     };
 
     for (templated_files) |templated_file| {
-        if (day_data.day_stage == scrape.DayStage.New and templated_file.index == part_2_template.index) {
+        if (day_data.day_stage == scrape.DayStage.New and
+            (templated_file.index == part_2_template.index or templated_file.index == part_2_test_template.index))
+        {
             continue;
         }
         try writeTemplatedFile(allocator, templated_file, output_dir_path, day_data);
@@ -165,6 +167,21 @@ fn writeTemplatedFile(
             .part_2 = part_2_available,
         },
         part_2_template.index => Context{
+            .real_answer = day_data.part_2_real_answer,
+            .example_answer = day_data.part_2_example_answer,
+            .part_2 = part_2_available,
+        },
+        bench_template.index => Context{
+            .real_answer = null,
+            .example_answer = null,
+            .part_2 = part_2_available,
+        },
+        part_1_test_template.index => Context{
+            .real_answer = day_data.part_1_real_answer,
+            .example_answer = day_data.part_1_example_answer,
+            .part_2 = part_2_available,
+        },
+        part_2_test_template.index => Context{
             .real_answer = day_data.part_2_real_answer,
             .example_answer = day_data.part_2_example_answer,
             .part_2 = part_2_available,
