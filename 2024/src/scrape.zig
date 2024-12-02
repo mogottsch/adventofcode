@@ -175,17 +175,22 @@ fn extractCodeBlocks(
     var code_blocks = try extractBetween(allocator, body, "<pre><code>", "</code></pre>");
     defer code_blocks.deinit();
 
+    if (code_blocks.strings.len != 1 and code_blocks.strings.len != 2) {
+        warn("Expected 1 or 2 code blocks, got {d}", .{code_blocks.strings.len});
+    }
     if (day_stage == DayStage.New and code_blocks.strings.len != 1) {
         warn("Expected 1 code block for a new day, got {d}", .{code_blocks.strings.len});
         return error.InvalidCodeBlockCount;
     }
-    if (day_stage != DayStage.New and code_blocks.strings.len != 2) {
-        warn("Expected 2 code blocks for a part 1 or part 2 solved day, got {d}", .{code_blocks.strings.len});
-        return error.InvalidCodeBlockCount;
+    if (day_stage != DayStage.New and code_blocks.strings.len == 1) {
+        warn("Only found 1 code block. Using first code block for part 2.", .{});
     }
 
     const example_1 = try allocator.dupe(u8, code_blocks.strings[0]);
-    const example_2 = if (code_blocks.strings.len == 2) try allocator.dupe(u8, code_blocks.strings[1]) else null;
+    const example_2 = if (code_blocks.strings.len == 2)
+        try allocator.dupe(u8, code_blocks.strings[1])
+    else
+        try allocator.dupe(u8, code_blocks.strings[0]);
 
     return CodeBlocks{ .example_1 = example_1, .example_2 = example_2, .allocator = allocator };
 }
