@@ -16,3 +16,15 @@ test "part 1 example" {
     try testing.expectEqual(result, EXAMPLE_ANSWER_1);
 }
 
+const REAL_ANSWER_1: u32 = 299;
+
+test "part 1 real" {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer _ = gpa.deinit();
+    var input = try parse.parse_file(allocator, "input.txt");
+    defer input.deinit();
+
+    const result = part_1.run(allocator, input);
+    try testing.expectEqual(result, REAL_ANSWER_1);
+}

@@ -18,7 +18,6 @@ fn isSafe(report: parse.Report) bool {
     const readings = report.readings;
 
     for (readings[0 .. readings.len - 1], readings[1..readings.len]) |last, current| {
-        // check trend
         const is_increasing = last < current;
         if (was_increasing != null and was_increasing != is_increasing) {
             return false;
