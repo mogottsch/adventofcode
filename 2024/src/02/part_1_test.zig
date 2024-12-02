@@ -13,7 +13,7 @@ test "part 1 example" {
     defer input.deinit();
 
     const result = part_1.run(allocator, input);
-    try testing.expectEqual(result, EXAMPLE_ANSWER_1);
+    try testing.expectEqual(EXAMPLE_ANSWER_1, result);
 }
 
 const REAL_ANSWER_1: u32 = 299;
@@ -26,5 +26,5 @@ test "part 1 real" {
     defer input.deinit();
 
     const result = part_1.run(allocator, input);
-    try testing.expectEqual(result, REAL_ANSWER_1);
+    try testing.expectEqual(REAL_ANSWER_1, result);
 }
