@@ -12,8 +12,8 @@
             .hash = "1220b7c71488a858f933e68c6b1d1ba7178cb72076e2dcdd3fe87d03b8990a8aa6c1",
         },
         .zbench = .{
-            .url = "git+https://github.com/hendriknielaender/zBench#fb3ecae5d035091fd2392a2ec21970c06fc375fa",
-            .hash = "1220a7a9fd016fac2e973e6b3baa489fcddeef5fa2459091d73236f8924a0b78a730",
+            .url = "git+https://github.com/hendriknielaender/zBench#463b546a5fd01332680d1b3eb6fad6567876eb2b",
+            .hash = "12208ffb446b4230996f3746a20e1890e493bf8974841c4404c4fc8b07e09fd9c875",
         },
         .regex = .{
             .url = "git+https://github.com/tiehuis/zig-regex#7bc0fd777c3b92c51a94531439e5913bda24030c",

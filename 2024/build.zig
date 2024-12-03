@@ -206,6 +206,7 @@ fn addBenchIfExists(
     bench_exe.root_module.addOptions("config", options);
     addDependencyToExe(bench_exe, b, "pretty", target, optimize);
     addDependencyToExe(bench_exe, b, "zbench", target, optimize);
+    addDependencyToExe(bench_exe, b, "regex", target, optimize);
 
     const run_bench = b.addRunArtifact(bench_exe);
     bench_step.dependOn(&run_bench.step);
