@@ -4,16 +4,20 @@
 
     .dependencies = .{
         .mustache = .{
-            .url = "git+https://github.com/batiati/mustache-zig#822933184fb0cbc8e692e9c73618deb2b0b8108c",
-            .hash = "122008747b05328191a1b3c2a83520b82f11e87ae12e2cc8f92305792203802a0b02",
+            .url = "git+https://github.com/batiati/mustache-zig#ae5ecc1522da983dc39bb0d8b27f5d1b1d7956e3",
+            .hash = "1220ac9e3316ce71ad9cd66c7f215462bf5c187828b50bb3d386549bf6af004e3bb0",
         },
         .pretty = .{
-            .url = "git+https://github.com/timfayz/pretty#6fbc0d45b7d397b67db0b0af8f2e2000036f977f",
-            .hash = "12209290db27d058b481801cf9a79c706fb0c482e7f6378d50495750aae19524d4b7",
+            .url = "git+https://github.com/timfayz/pretty#9e44ca6185ee8e06fa3bda19bb09f2ec44cf777c",
+            .hash = "1220b7c71488a858f933e68c6b1d1ba7178cb72076e2dcdd3fe87d03b8990a8aa6c1",
         },
         .zbench = .{
-            .url = "git+https://github.com/lateefj/zBench#6962b22153078185df8f7bc8fa3fb29945a37f2d",
+            .url = "git+https://github.com/hendriknielaender/zBench#fb3ecae5d035091fd2392a2ec21970c06fc375fa",
             .hash = "1220a7a9fd016fac2e973e6b3baa489fcddeef5fa2459091d73236f8924a0b78a730",
+        },
+        .regex = .{
+            .url = "git+https://github.com/tiehuis/zig-regex#7bc0fd777c3b92c51a94531439e5913bda24030c",
+            .hash = "1220b497739b6fd60f627da85862cbd0cec01f3d6b7ddaa923057a7999ecfa138704",
         },
     },
 

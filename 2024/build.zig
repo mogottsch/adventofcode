@@ -38,6 +38,7 @@ pub fn build(b: *std.Build) void {
         });
         commonModule.addOptions("config", options);
         addDependencyToModule(commonModule, b, "zbench", target, optimize);
+        addDependencyToModule(commonModule, b, "regex", target, optimize);
 
         const exe = b.addExecutable(.{
             .name = b.fmt("{:0>2}", .{day_num}),
@@ -48,6 +49,7 @@ pub fn build(b: *std.Build) void {
         exe.root_module.addImport("common", commonModule);
         exe.root_module.addOptions("config", options);
         addDependencyToExe(exe, b, "pretty", target, optimize);
+        addDependencyToExe(exe, b, "regex", target, optimize);
         b.installArtifact(exe);
 
         const run_cmd = b.addRunArtifact(exe);
@@ -132,6 +134,7 @@ fn addTestIfExists(
     test_exe.root_module.addOptions("config", options);
     addDependencyToExe(test_exe, b, "pretty", target, optimize);
     addDependencyToExe(test_exe, b, "zbench", target, optimize);
+    addDependencyToExe(test_exe, b, "regex", target, optimize);
 
     const run_test = b.addRunArtifact(test_exe);
     test_step.dependOn(&run_test.step);
@@ -155,6 +158,7 @@ fn addGenerateStep(
 
     addDependencyToExe(generate_exe, b, "mustache", target, optimize);
     addDependencyToExe(generate_exe, b, "pretty", target, optimize);
+    addDependencyToExe(generate_exe, b, "regex", target, optimize);
 
     b.installArtifact(generate_exe);
 
