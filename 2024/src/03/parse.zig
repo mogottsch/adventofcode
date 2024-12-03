@@ -39,12 +39,77 @@ pub const Input = struct {
     }
 };
 
+const DO_STR = "do()";
+const DO_STR_LEN = DO_STR.len;
+const DONT_STR = "don't()";
+const DONT_STR_LEN = DONT_STR.len;
+const MUL_STR = "mul(";
+const MUL_STR_LEN = MUL_STR.len;
+
 pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
-    const filepath = try path.buildPath(allocator, filename);
-    defer allocator.free(filepath);
-    const file = try std.fs.openFileAbsolute(filepath, .{});
-    defer file.close();
-    const content = try file.readToEndAlloc(allocator, std.math.maxInt(usize));
+    const content = try readFileContent(allocator, filename);
+    defer allocator.free(content);
+
+    var instructions = std.ArrayList(InstructionWithArgs).init(allocator);
+
+    var i: usize = 0;
+    while (i < content.len) {
+        const current_content = content[i..];
+        if (std.mem.startsWith(u8, current_content, DO_STR)) {
+            try instructions.append(InstructionWithArgs{ .command = Instruction.Do, .a = 0, .b = 0 });
+            i += DO_STR_LEN;
+            continue;
+        }
+        if (std.mem.startsWith(u8, current_content, DONT_STR)) {
+            try instructions.append(InstructionWithArgs{ .command = Instruction.Dont, .a = 0, .b = 0 });
+            i += DONT_STR_LEN;
+            continue;
+        }
+
+        if (std.mem.startsWith(u8, current_content, MUL_STR)) {
+            const mul_start = i + MUL_STR_LEN;
+
+            const mul_end = std.mem.indexOfScalar(u8, current_content, ')') orelse {
+                i += 1;
+                continue;
+            };
+            const mul_args = content[mul_start .. i + mul_end];
+            var mul_args_split = std.mem.splitScalar(u8, mul_args, ',');
+            const a_str = mul_args_split.next() orelse {
+                i += 1;
+                continue;
+            };
+            const b_str = mul_args_split.next() orelse {
+                i += 1;
+                continue;
+            };
+            const next_char = mul_args_split.next();
+            if (next_char != null) {
+                i += 1;
+                continue;
+            }
+            const a = std.fmt.parseInt(u32, a_str, 10) catch {
+                i += 1;
+                continue;
+            };
+            const b = std.fmt.parseInt(u32, b_str, 10) catch {
+                i += 1;
+                continue;
+            };
+
+            try instructions.append(InstructionWithArgs{ .command = Instruction.Mul, .a = a, .b = b });
+            i += mul_end + 1;
+            continue;
+        }
+        i += 1;
+    }
+
+    return Input{ .instructions = try instructions.toOwnedSlice(), .allocator = allocator };
+}
+
+// this is way slower
+pub fn parse_file_regex(allocator: std.mem.Allocator, filename: []const u8) !Input {
+    const content = try readFileContent(allocator, filename);
     defer allocator.free(content);
 
     std.mem.replaceScalar(u8, content, '\n', ' ');
@@ -76,62 +141,12 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
     return Input{ .instructions = try instructions.toOwnedSlice(), .allocator = allocator };
 }
 
-pub fn parse_file_fast(allocator: std.mem.Allocator, filename: []const u8) !Input {
+fn readFileContent(allocator: std.mem.Allocator, filename: []const u8) ![]u8 {
     const filepath = try path.buildPath(allocator, filename);
     defer allocator.free(filepath);
+
     const file = try std.fs.openFileAbsolute(filepath, .{});
     defer file.close();
-    const content = try file.readToEndAlloc(allocator, std.math.maxInt(usize));
-    defer allocator.free(content);
 
-    var instructions = std.ArrayList(InstructionWithArgs).init(allocator);
-
-    var i: usize = 0;
-    while (i < content.len) {
-        const current_content = content[i..];
-        // std.debug.print("current_content: {s}\n", .{current_content});
-        if (std.mem.startsWith(u8, current_content, "do()")) {
-            try instructions.append(InstructionWithArgs{ .command = Instruction.Do, .a = 0, .b = 0 });
-            i += 4;
-            continue;
-        }
-        if (std.mem.startsWith(u8, current_content, "don't()")) {
-            try instructions.append(InstructionWithArgs{ .command = Instruction.Dont, .a = 0, .b = 0 });
-            i += 7;
-            continue;
-        }
-
-        if (std.mem.startsWith(u8, current_content, "mul(")) {
-            const mul_start = i + 4;
-
-            const mul_end = std.mem.indexOfScalar(u8, current_content, ')') orelse {
-                i += 1;
-                continue;
-            };
-            const mul_args = content[mul_start .. i + mul_end];
-            var mul_args_split = std.mem.splitScalar(u8, mul_args, ',');
-            const a_str = mul_args_split.next() orelse {
-                i += 1;
-                continue;
-            };
-            const b_str = mul_args_split.next() orelse {
-                i += 1;
-                continue;
-            };
-            const a = std.fmt.parseInt(u32, a_str, 10) catch {
-                i += 1;
-                continue;
-            };
-            const b = std.fmt.parseInt(u32, b_str, 10) catch {
-                i += 1;
-                continue;
-            };
-            try instructions.append(InstructionWithArgs{ .command = Instruction.Mul, .a = a, .b = b });
-            i += mul_end + 1;
-            continue;
-        }
-        i += 1;
-    }
-
-    return Input{ .instructions = try instructions.toOwnedSlice(), .allocator = allocator };
+    return try file.readToEndAlloc(allocator, std.math.maxInt(usize));
 }
