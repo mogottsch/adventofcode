@@ -10,8 +10,8 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     _ = allocator;
     var total: u32 = 0;
 
-    for (input.instructions) |pair| {
-        total += pair.a * pair.b;
+    for (input.instructions) |instruction| {
+        total += instruction.a * instruction.b;
     }
 
     return total;
