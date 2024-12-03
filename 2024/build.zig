@@ -39,6 +39,7 @@ pub fn build(b: *std.Build) void {
         commonModule.addOptions("config", options);
         addDependencyToModule(commonModule, b, "zbench", target, optimize);
         addDependencyToModule(commonModule, b, "regex", target, optimize);
+        addDependencyToModule(commonModule, b, "pretty", target, optimize);
 
         const exe = b.addExecutable(.{
             .name = b.fmt("{:0>2}", .{day_num}),

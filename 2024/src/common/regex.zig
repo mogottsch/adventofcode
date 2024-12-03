@@ -1,5 +1,6 @@
 const std = @import("std");
 const regex = @import("regex");
+const pretty = @import("pretty");
 
 pub const CapturesCollection = struct {
     captures_slice: []regex.Captures,
@@ -18,6 +19,7 @@ pub fn captureAll(allocator: std.mem.Allocator, pattern: *regex.Regex, content: 
     var start: usize = 0;
     while (true) {
         var captures = try pattern.captures(content[start..]) orelse break;
+        // try pretty.print(allocator, captures, .{});
 
         try captures_list.append(captures);
 
