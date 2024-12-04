@@ -167,6 +167,8 @@ const CodeBlocks = struct {
     }
 };
 
+// TODO: handle multiple code blocks properly
+// best would be to save all to example_x.txt
 fn extractCodeBlocks(
     allocator: std.mem.Allocator,
     body: []const u8,
@@ -178,10 +180,10 @@ fn extractCodeBlocks(
     if (code_blocks.strings.len != 1 and code_blocks.strings.len != 2) {
         warn("Expected 1 or 2 code blocks, got {d}", .{code_blocks.strings.len});
     }
-    if (day_stage == DayStage.New and code_blocks.strings.len != 1) {
-        warn("Expected 1 code block for a new day, got {d}", .{code_blocks.strings.len});
-        return error.InvalidCodeBlockCount;
-    }
+    // if (day_stage == DayStage.New and code_blocks.strings.len != 1) {
+    //     warn("Expected 1 code block for a new day, got {d}", .{code_blocks.strings.len});
+    //     return error.InvalidCodeBlockCount;
+    // }
     if (day_stage != DayStage.New and code_blocks.strings.len == 1) {
         warn("Only found 1 code block. Using first code block for part 2.", .{});
     }

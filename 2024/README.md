@@ -30,3 +30,6 @@ zig build generate -- 1
 ```bash
 zig build bench-1
 ```
+
+# Todos
+- [ ] handle multiple code blocks properly
