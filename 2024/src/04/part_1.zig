@@ -4,6 +4,18 @@ const testing = std.testing;
 const pretty = @import("pretty");
 const string = @import("common").string;
 
+const WORD = "XMAS";
+const WORD_BACKWARDS = "SAMX";
+
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+    // return runSolutionA(allocator, input);
+
+    _ = allocator;
+    return runSolutionB(input.lines);
+}
+
+// ---------- SOLUTION A ----------
+
 const AllDirections = struct {
     lines: [][]const u8,
 
@@ -17,14 +29,14 @@ const AllDirections = struct {
     }
 };
 
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+fn runSolutionA(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     var all_directions = try linesToAllDirections(allocator, input.lines);
     defer all_directions.deinit();
 
     var total_occurrences: u32 = 0;
     for (all_directions.lines) |line| {
-        total_occurrences += string.countOccurrences("XMAS", line) +
-            string.countOccurrences("SAMX", line);
+        total_occurrences += string.countOccurrences(WORD, line) +
+            string.countOccurrences(WORD_BACKWARDS, line);
     }
 
     return total_occurrences;
@@ -139,4 +151,57 @@ fn readDiagonal(
         y += 1;
     }
     try result_list.append(try line.toOwnedSlice());
+}
+
+// ---------- SOLUTION B ----------
+const Direction = struct {
+    dr: i32,
+    dc: i32,
+};
+
+const DIRECTIONS = [_]Direction{
+    .{ .dr = 0, .dc = 1 }, // right
+    .{ .dr = 0, .dc = -1 }, // left
+    .{ .dr = 1, .dc = 0 }, // down
+    .{ .dr = -1, .dc = 0 }, // up
+    .{ .dr = 1, .dc = 1 }, // down-right
+    .{ .dr = 1, .dc = -1 }, // down-left
+    .{ .dr = -1, .dc = 1 }, // up-right
+    .{ .dr = -1, .dc = -1 }, // up-left
+};
+
+fn runSolutionB(lines: []const []const u8) u32 {
+    const rows = lines.len;
+    const cols = lines[0].len;
+    var count: u32 = 0;
+
+    for (0..rows) |r| {
+        for (0..cols) |c| {
+            for (DIRECTIONS) |dir| {
+                if (findWord(lines, @intCast(r), @intCast(c), dir)) {
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    return count;
+}
+
+fn findWord(lines: []const []const u8, row: i32, col: i32, dir: Direction) bool {
+    const rows = lines.len;
+    const cols = lines[0].len;
+
+    for (WORD, 0..) |char, i| {
+        const nr = row + dir.dr * @as(i32, @intCast(i));
+        const nc = col + dir.dc * @as(i32, @intCast(i));
+
+        if (!isValid(nr, nc, rows, cols)) return false;
+        if (lines[@intCast(nr)][@intCast(nc)] != char) return false;
+    }
+    return true;
+}
+
+fn isValid(row: i32, col: i32, rows: usize, cols: usize) bool {
+    return row >= 0 and row < rows and col >= 0 and col < cols;
 }
