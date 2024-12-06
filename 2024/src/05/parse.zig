@@ -3,17 +3,17 @@ const path = @import("common").path;
 const log = std.log;
 
 pub const Input = struct {
-    left_before_rights: std.AutoHashMap(u32, []u32),
+    rules: std.AutoHashMap(u32, []u32),
     updates: [][]u32,
 
     allocator: std.mem.Allocator,
 
     pub fn deinit(self: *Input) void {
-        var iter = self.left_before_rights.valueIterator();
+        var iter = self.rules.valueIterator();
         while (iter.next()) |value| {
             self.allocator.free(value.*);
         }
-        self.left_before_rights.deinit();
+        self.rules.deinit();
 
         for (self.updates) |update| {
             self.allocator.free(update);
@@ -45,7 +45,7 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
         allocator.free(updates);
     }
 
-    return Input{ .left_before_rights = rules, .updates = updates, .allocator = allocator };
+    return Input{ .rules = rules, .updates = updates, .allocator = allocator };
 }
 
 pub fn parse_rules(allocator: std.mem.Allocator, rules: []const u8) !std.AutoHashMap(u32, []u32) {
