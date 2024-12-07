@@ -34,28 +34,33 @@ const Direction = enum {
     }
 };
 
-const GuardState = struct {
+const Guard = struct {
     position: Vector2D,
     direction: Direction,
 
-    fn getView(self: GuardState, input: parse.Input) !Cell {
+    fn getView(self: Guard, input: parse.Input) !Cell {
         const view = try self.position.add(self.direction.getVector(), input);
         return try input.getCell(view);
     }
 
-    fn turn90DegreesRight(self: GuardState) GuardState {
-        return GuardState{
+    fn turn90DegreesRight(self: Guard) Guard {
+        return Guard{
             .position = self.position,
             .direction = self.direction.turn90DegreesRight(),
         };
     }
 
-    fn moveForward(self: GuardState, input: parse.Input) !GuardState {
+    fn moveForward(self: Guard, input: parse.Input) !Guard {
         const new_position = try self.position.add(self.direction.getVector(), input);
-        return GuardState{
+        return Guard{
             .position = new_position,
             .direction = self.direction,
         };
+    }
+
+    fn facesObstacle(guard: Guard, input: parse.Input) bool {
+        const view = guard.getView(input) catch return false;
+        return view == Cell.Obstacle;
     }
 };
 
@@ -81,26 +86,26 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     return visited.count();
 }
 
-fn findGuard(input: parse.Input) !GuardState {
+fn findGuard(input: parse.Input) !Guard {
     const grid = input.grid;
     for (grid, 0..) |row, row_index| {
         for (row, 0..) |raw_cell, col_index| {
             const position = Vector2D{ .x = @intCast(col_index), .y = @intCast(row_index) };
             const cell = try std.meta.intToEnum(Cell, raw_cell);
             switch (cell) {
-                Cell.Up => return GuardState{
+                Cell.Up => return Guard{
                     .position = position,
                     .direction = Direction.Up,
                 },
-                Cell.Down => return GuardState{
+                Cell.Down => return Guard{
                     .position = position,
                     .direction = Direction.Down,
                 },
-                Cell.Left => return GuardState{
+                Cell.Left => return Guard{
                     .position = position,
                     .direction = Direction.Left,
                 },
-                Cell.Right => return GuardState{
+                Cell.Right => return Guard{
                     .position = position,
                     .direction = Direction.Right,
                 },
@@ -111,22 +116,10 @@ fn findGuard(input: parse.Input) !GuardState {
     unreachable;
 }
 
-fn facesObstacle(guard: GuardState, input: parse.Input) bool {
-    const view = guard.getView(input) catch return false;
-    return view == Cell.Obstacle;
-}
-
-fn turn90DegreesRight(guard: GuardState) GuardState {
-    return GuardState{
-        .position = guard.position,
-        .direction = guard.direction.turn90DegreesRight(),
-    };
-}
-
-fn doStep(guard: GuardState, input: parse.Input) !GuardState {
+fn doStep(guard: Guard, input: parse.Input) !Guard {
     var new_guard = guard;
-    if (facesObstacle(guard, input)) {
-        new_guard = turn90DegreesRight(guard);
+    if (guard.facesObstacle(input)) {
+        new_guard = new_guard.turn90DegreesRight();
     }
     return try new_guard.moveForward(input);
 }
