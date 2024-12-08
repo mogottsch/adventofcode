@@ -18,20 +18,17 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
 }
 
 fn checkEquationSolvable(left: u64, current: u64, right: []u64) bool {
-    if (right.len == 0) {
-        return left == current;
-    }
+    if (right.len == 0) return left == current;
+    if (current > left) return false;
 
     const next = right[0];
 
     return checkEquationSolvable(left, current + next, right[1..]) or
         checkEquationSolvable(left, current * next, right[1..]) or
-        checkEquationSolvable(left, concatNumbers(current, next), right[1..]);
+        checkEquationSolvable(left, concatNumbersLookup(current, next), right[1..]);
 }
 
-// 5, 62 -> 562
 fn concatNumbers(left: u64, right: u64) u64 {
-    // std.debug.print("left: {}, right: {}\n", .{ left, right });
     var temp = right;
     if (temp == 0) {
         return left * 10;
@@ -40,8 +37,29 @@ fn concatNumbers(left: u64, right: u64) u64 {
     while (temp > 0) : (temp /= 10) {
         multiplier *= 10;
     }
-    // std.debug.print("multiplier: {}\n", .{multiplier});
     return left * multiplier + right;
+}
+
+fn concatNumbersLookup(left: u64, right: u64) u64 {
+    if (right == 0) {
+        return left * 10;
+    }
+
+    const multipliers = [_]u64{
+        1,
+        10,
+        100,
+        1000,
+    };
+
+    const digits: usize = if (right < 10)
+        1
+    else if (right < 100)
+        2
+    else
+        3;
+
+    return left * multipliers[digits] + right;
 }
 
 test "concatNumbers" {
