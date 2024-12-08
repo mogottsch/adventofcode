@@ -50,6 +50,27 @@ pub const Input = struct {
     pub fn getCell(self: Input, position: Vector2D) !Cell {
         return try std.meta.intToEnum(Cell, self.grid[@intCast(position.y)][@intCast(position.x)]);
     }
+
+    pub fn copy(self: Input, allocator: std.mem.Allocator) !Input {
+        var new_grid = try allocator.alloc([]u8, self.grid.len);
+        errdefer allocator.free(new_grid);
+
+        for (self.grid, 0..) |row, i| {
+            new_grid[i] = try allocator.dupe(u8, row);
+        }
+
+        return Input{
+            .grid = new_grid,
+            .allocator = allocator,
+        };
+    }
+
+    pub fn copyAndPlaceObstacle(self: Input, allocator: std.mem.Allocator, position: Vector2D) !Input {
+        var new_input = try self.copy(allocator);
+        errdefer new_input.deinit();
+        new_input.grid[@intCast(position.y)][@intCast(position.x)] = @intFromEnum(Cell.Obstacle);
+        return new_input;
+    }
 };
 
 pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {

@@ -34,13 +34,17 @@ const Direction = enum {
     }
 };
 
-const Guard = struct {
+pub const Guard = struct {
     position: Vector2D,
     direction: Direction,
 
-    fn getView(self: Guard, input: parse.Input) !Cell {
-        const view = try self.position.add(self.direction.getVector(), input);
-        return try input.getCell(view);
+    pub fn getView(self: Guard, input: parse.Input) !Cell {
+        const view_vector = try self.getViewVector(input);
+        return try input.getCell(view_vector);
+    }
+
+    pub fn getViewVector(self: Guard, input: parse.Input) !Vector2D {
+        return self.position.add(self.direction.getVector(), input);
     }
 
     fn turn90DegreesRight(self: Guard) Guard {
@@ -62,31 +66,36 @@ const Guard = struct {
         const view = guard.getView(input) catch return false;
         return view == Cell.Obstacle;
     }
+
+    pub fn doStep(guard: Guard, input: parse.Input) !Guard {
+        var new_guard = guard;
+        if (guard.facesObstacle(input)) {
+            new_guard = new_guard.turn90DegreesRight();
+        }
+        return try new_guard.moveForward(input);
+    }
 };
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
-    // try pretty.print(allocator, input, .{});
     var guard = try findGuard(input);
-    // try pretty.print(allocator, guard, .{});
 
     var visited = std.AutoHashMap(Vector2D, void).init(allocator);
     defer visited.deinit();
 
     while (true) {
         try visited.put(guard.position, {});
-        guard = doStep(guard, input) catch |err| {
+        guard = guard.doStep(input) catch |err| {
             if (err == error.OutOfBounds) {
                 break;
             }
             return err;
         };
-        // try pretty.print(allocator, guard, .{});
     }
 
     return visited.count();
 }
 
-fn findGuard(input: parse.Input) !Guard {
+pub fn findGuard(input: parse.Input) !Guard {
     const grid = input.grid;
     for (grid, 0..) |row, row_index| {
         for (row, 0..) |raw_cell, col_index| {
@@ -114,12 +123,4 @@ fn findGuard(input: parse.Input) !Guard {
         }
     }
     unreachable;
-}
-
-fn doStep(guard: Guard, input: parse.Input) !Guard {
-    var new_guard = guard;
-    if (guard.facesObstacle(input)) {
-        new_guard = new_guard.turn90DegreesRight();
-    }
-    return try new_guard.moveForward(input);
 }
