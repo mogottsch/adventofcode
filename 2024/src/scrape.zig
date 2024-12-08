@@ -15,10 +15,10 @@ pub const DayData = struct {
     input: []const u8,
     part_1_example_input: []const u8,
     part_2_example_input: ?[]const u8,
-    part_1_example_answer: i32,
-    part_2_example_answer: ?i32,
-    part_1_real_answer: ?i32,
-    part_2_real_answer: ?i32,
+    part_1_example_answer: u64,
+    part_2_example_answer: ?u64,
+    part_1_real_answer: ?u64,
+    part_2_real_answer: ?u64,
     day_stage: DayStage,
     allocator: std.mem.Allocator,
 
@@ -34,10 +34,10 @@ pub const DayData = struct {
 const ScrapedData = struct {
     example_1_code_block: []const u8,
     example_2_code_block: ?[]const u8,
-    example_1_solution: i32,
-    example_2_solution: ?i32,
-    real_solution_1: ?i32,
-    real_solution_2: ?i32,
+    example_1_solution: u64,
+    example_2_solution: ?u64,
+    real_solution_1: ?u64,
+    real_solution_2: ?u64,
     day_stage: DayStage,
 
     allocator: std.mem.Allocator,
@@ -201,9 +201,9 @@ fn extractExampleSolutions(
     allocator: std.mem.Allocator,
     body: []const u8,
     day_stage: DayStage,
-) !struct { solution_1: i32, solution_2: ?i32 } {
-    var example_solution_1: i32 = 0;
-    var example_solution_2: ?i32 = null;
+) !struct { solution_1: u64, solution_2: ?u64 } {
+    var example_solution_1: u64 = 0;
+    var example_solution_2: ?u64 = null;
 
     switch (day_stage) {
         .New => {
@@ -211,7 +211,7 @@ fn extractExampleSolutions(
             defer examples.deinit();
 
             if (examples.strings.len == 0) return error.NoExampleSolutions;
-            example_solution_1 = try std.fmt.parseInt(i32, examples.strings[examples.strings.len - 1], 10);
+            example_solution_1 = try std.fmt.parseInt(u64, examples.strings[examples.strings.len - 1], 10);
         },
         .Part1Solved, .Part2Solved => {
             var parts_iter = std.mem.splitSequence(u8, body, PUZZLE_ANSWER_PREFIX);
@@ -222,7 +222,7 @@ fn extractExampleSolutions(
 
                 if (first_examples.strings.len == 0) return error.NoExampleSolutions;
                 example_solution_1 = try std.fmt.parseInt(
-                    i32,
+                    u64,
                     first_examples.strings[first_examples.strings.len - 1],
                     10,
                 );
@@ -234,7 +234,7 @@ fn extractExampleSolutions(
 
                 if (second_examples.strings.len == 0) return error.NoExampleSolutions;
                 example_solution_2 = try std.fmt.parseInt(
-                    i32,
+                    u64,
                     second_examples.strings[second_examples.strings.len - 1],
                     10,
                 );
@@ -248,9 +248,9 @@ fn extractExampleSolutions(
 fn extractRealSolutions(
     allocator: std.mem.Allocator,
     body: []const u8,
-) !struct { solution_1: ?i32, solution_2: ?i32 } {
-    var real_solution_1: ?i32 = null;
-    var real_solution_2: ?i32 = null;
+) !struct { solution_1: ?u64, solution_2: ?u64 } {
+    var real_solution_1: ?u64 = null;
+    var real_solution_2: ?u64 = null;
 
     var lines = try findLinesWithSubstring(allocator, body, PUZZLE_ANSWER_PREFIX);
     defer lines.deinit();
@@ -259,12 +259,12 @@ fn extractRealSolutions(
 
     const real_solution_1_str = try extractBetween(allocator, lines.lines[0], "<code>", "</code>");
     defer real_solution_1_str.deinit();
-    real_solution_1 = try std.fmt.parseInt(i32, real_solution_1_str.strings[0], 10);
+    real_solution_1 = try std.fmt.parseInt(u64, real_solution_1_str.strings[0], 10);
     if (lines.lines.len == 1) return .{ .solution_1 = real_solution_1, .solution_2 = null };
 
     const real_solution_2_str = try extractBetween(allocator, lines.lines[1], "<code>", "</code>");
     defer real_solution_2_str.deinit();
-    real_solution_2 = try std.fmt.parseInt(i32, real_solution_2_str.strings[0], 10);
+    real_solution_2 = try std.fmt.parseInt(u64, real_solution_2_str.strings[0], 10);
 
     return .{ .solution_1 = real_solution_1, .solution_2 = real_solution_2 };
 }

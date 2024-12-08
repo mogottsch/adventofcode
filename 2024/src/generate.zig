@@ -69,8 +69,8 @@ const templated_files = [_]TemplatedFile{
 const Context = struct {
     part_2: bool,
 
-    example_answer: ?i32,
-    real_answer: ?i32,
+    example_answer: ?u64,
+    real_answer: ?u64,
 };
 
 pub fn main() !void {
