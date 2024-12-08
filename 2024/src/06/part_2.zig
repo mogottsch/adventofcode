@@ -25,7 +25,7 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
 
         try checked_positions.put(guard, {});
 
-        const view = guard.getViewVector(input) catch |err| {
+        const pos_in_front = guard.getViewVector(input) catch |err| {
             if (err == error.OutOfBounds) {
                 break;
             }
@@ -34,22 +34,20 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
 
         if (
         // can't place Obstacle at guards starting position
-        (view.x == starting_position.x and view.y == starting_position.y) or
+        (pos_in_front.x == starting_position.x and pos_in_front.y == starting_position.y) or
             // can't place Obstacle where already obstacle
-            (try input.getCell(view) == parse.Cell.Obstacle) or
+            (try input.getCell(pos_in_front) == parse.Cell.Obstacle) or
             // can't place Obstacle where already obstacle was placed
-            placed_obstacles.contains(view))
+            placed_obstacles.contains(pos_in_front))
         {
             guard = try guard.doStep(input);
             continue;
         }
 
-        var input_to_check = try input.copyAndPlaceObstacle(allocator, view);
+        var input_to_check = try input.copyAndPlaceObstacle(allocator, pos_in_front);
         defer input_to_check.deinit();
         if (try checkCircle(allocator, input_to_check, guard)) {
-            // printInputWithGuard(input_to_check, guard);
-            // std.debug.print("{any}\n", .{view});
-            try placed_obstacles.put(view, {});
+            try placed_obstacles.put(pos_in_front, {});
             possible_positions += 1;
         }
 
