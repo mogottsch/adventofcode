@@ -76,7 +76,7 @@ pub const Guard = struct {
     }
 };
 
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var guard = try findGuard(input);
 
     var visited = std.AutoHashMap(Vector2D, void).init(allocator);

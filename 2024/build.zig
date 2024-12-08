@@ -154,7 +154,7 @@ fn addGenerateStep(
     });
 
     const options = b.addOptions();
-    options.addOption(u32, "YEAR", 2024);
+    options.addOption(u64, "YEAR", 2024);
     generate_exe.root_module.addOptions("config", options);
 
     addDependencyToExe(generate_exe, b, "mustache", target, optimize);

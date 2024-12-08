@@ -3,7 +3,7 @@ const path = @import("common").path;
 const log = std.log;
 
 pub const Report = struct {
-    readings: []u32,
+    readings: []u64,
 
     allocator: std.mem.Allocator,
 
@@ -13,10 +13,10 @@ pub const Report = struct {
 
     pub fn fromLine(allocator: std.mem.Allocator, line: []const u8) !Report {
         var iterator = std.mem.splitScalar(u8, line, ' ');
-        var list = std.ArrayList(u32).init(allocator);
+        var list = std.ArrayList(u64).init(allocator);
 
         while (iterator.next()) |entry| {
-            const number = try std.fmt.parseInt(u32, entry, 10);
+            const number = try std.fmt.parseInt(u64, entry, 10);
             try list.append(number);
         }
 

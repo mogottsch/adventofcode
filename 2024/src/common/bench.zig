@@ -6,8 +6,8 @@ pub fn runBenchmarks(
     comptime ParseResult: type,
     allocator: std.mem.Allocator,
     parse_fn: fn (std.mem.Allocator, []const u8) anyerror!ParseResult,
-    part1_fn: fn (std.mem.Allocator, ParseResult) anyerror!u32,
-    part2_fn: fn (std.mem.Allocator, ParseResult) anyerror!u32,
+    part1_fn: fn (std.mem.Allocator, ParseResult) anyerror!u64,
+    part2_fn: fn (std.mem.Allocator, ParseResult) anyerror!u64,
 ) !void {
     const BenchContext = struct {
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};

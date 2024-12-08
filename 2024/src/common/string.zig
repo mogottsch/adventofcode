@@ -1,7 +1,7 @@
 const std = @import("std");
 
-pub fn countOccurrences(needle: []const u8, haystack: []const u8) u32 {
-    var total_occurrences: u32 = 0;
+pub fn countOccurrences(needle: []const u8, haystack: []const u8) u64 {
+    var total_occurrences: u64 = 0;
     var index: usize = 0;
 
     while (index < haystack.len) {

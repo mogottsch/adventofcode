@@ -3,8 +3,8 @@ const parse = @import("parse.zig");
 const testing = std.testing;
 const pretty = @import("pretty");
 
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
-    var safe_reports: u32 = 0;
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
+    var safe_reports: u64 = 0;
 
     for (input.reports) |report| {
         if (try isSafeWhenAnyLevelRemoved(allocator, report)) {
@@ -69,7 +69,7 @@ fn isAlmostSafe(diffs: []i32) struct {
 } {
     if (diffs.len <= 1) return .{ .is_almost_valid = true, .problematic_index = 0 };
 
-    var problematic_count: u32 = 0;
+    var problematic_count: u64 = 0;
     var problematic_index: usize = 0;
     // var direction: ?bool = null; // true for increasing, false for decreasing
     const majority_direction = if (getMajorityDirection(diffs)) |dir| dir else return .{ .is_almost_valid = false, .problematic_index = 0 };
@@ -110,8 +110,8 @@ fn isAlmostSafe(diffs: []i32) struct {
 }
 
 fn getMajorityDirection(diffs: []i32) ?bool {
-    var increasing_count: u32 = 0;
-    var decreasing_count: u32 = 0;
+    var increasing_count: u64 = 0;
+    var decreasing_count: u64 = 0;
 
     for (diffs) |diff| {
         if (diff > 0) {

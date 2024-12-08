@@ -3,10 +3,10 @@ const parse = @import("parse.zig");
 const testing = std.testing;
 const pretty = @import("pretty");
 
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     _ = allocator;
 
-    var total: u32 = 0;
+    var total: u64 = 0;
     var is_enabled: bool = true;
 
     for (input.instructions) |instruction_with_args| {

@@ -3,8 +3,8 @@ const parse = @import("parse.zig");
 const testing = std.testing;
 const pretty = @import("pretty");
 
-pub fn run(_: std.mem.Allocator, input: parse.Input) !u32 {
-    var total_occurrences: u32 = 0;
+pub fn run(_: std.mem.Allocator, input: parse.Input) !u64 {
+    var total_occurrences: u64 = 0;
     for (0..input.lines.len) |y| {
         for (0..input.lines[y].len) |x| {
             if (is_x_mas(input.lines, x, y)) {

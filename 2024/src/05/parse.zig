@@ -3,8 +3,8 @@ const path = @import("common").path;
 const log = std.log;
 
 pub const Input = struct {
-    rules: std.AutoHashMap(u32, []u32),
-    updates: [][]u32,
+    rules: std.AutoHashMap(u64, []u64),
+    updates: [][]u64,
 
     allocator: std.mem.Allocator,
 
@@ -48,24 +48,24 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
     return Input{ .rules = rules, .updates = updates, .allocator = allocator };
 }
 
-pub fn parse_rules(allocator: std.mem.Allocator, rules: []const u8) !std.AutoHashMap(u32, []u32) {
-    var result = std.AutoHashMap(u32, std.ArrayList(u32)).init(allocator);
+pub fn parse_rules(allocator: std.mem.Allocator, rules: []const u8) !std.AutoHashMap(u64, []u64) {
+    var result = std.AutoHashMap(u64, std.ArrayList(u64)).init(allocator);
     defer result.deinit();
 
     var line_iter = std.mem.splitSequence(u8, rules, "\n");
     while (line_iter.next()) |line| {
         var parts = std.mem.splitSequence(u8, line, "|");
-        const left = try std.fmt.parseUnsigned(u32, parts.next().?, 10);
-        const new_right = try std.fmt.parseUnsigned(u32, parts.next().?, 10);
+        const left = try std.fmt.parseUnsigned(u64, parts.next().?, 10);
+        const new_right = try std.fmt.parseUnsigned(u64, parts.next().?, 10);
 
         var gop = try result.getOrPut(left);
         if (!gop.found_existing) {
-            gop.value_ptr.* = std.ArrayList(u32).init(allocator);
+            gop.value_ptr.* = std.ArrayList(u64).init(allocator);
         }
         try gop.value_ptr.append(new_right);
     }
 
-    var final_result = std.AutoHashMap(u32, []u32).init(allocator);
+    var final_result = std.AutoHashMap(u64, []u64).init(allocator);
     errdefer {
         var iter = final_result.valueIterator();
         while (iter.next()) |value| {
@@ -84,8 +84,8 @@ pub fn parse_rules(allocator: std.mem.Allocator, rules: []const u8) !std.AutoHas
     return final_result;
 }
 
-pub fn parse_updates(allocator: std.mem.Allocator, updates: []const u8) ![][]u32 {
-    var result = std.ArrayList([]u32).init(allocator);
+pub fn parse_updates(allocator: std.mem.Allocator, updates: []const u8) ![][]u64 {
+    var result = std.ArrayList([]u64).init(allocator);
     errdefer {
         for (result.items) |item| {
             allocator.free(item);
@@ -96,11 +96,11 @@ pub fn parse_updates(allocator: std.mem.Allocator, updates: []const u8) ![][]u32
     var line_iter = std.mem.splitSequence(u8, updates, "\n");
     while (line_iter.next()) |line| {
         var parts = std.mem.splitSequence(u8, line, ",");
-        var update = std.ArrayList(u32).init(allocator);
+        var update = std.ArrayList(u64).init(allocator);
         errdefer update.deinit();
 
         while (parts.next()) |part| {
-            const number = std.fmt.parseUnsigned(u32, part, 10) catch |err| {
+            const number = std.fmt.parseUnsigned(u64, part, 10) catch |err| {
                 log.err("Failed to parse number: {any}\n", .{part});
                 return err;
             };

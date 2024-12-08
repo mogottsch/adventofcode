@@ -3,7 +3,7 @@ const testing = std.testing;
 const parse = @import("parse.zig");
 const part_1 = @import("part_1.zig");
 
-const EXAMPLE_ANSWER_1: u32 = 2;
+const EXAMPLE_ANSWER_1: u64 = 2;
 
 test "part 1 example" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -16,7 +16,7 @@ test "part 1 example" {
     try testing.expectEqual(EXAMPLE_ANSWER_1, result);
 }
 
-const REAL_ANSWER_1: u32 = 299;
+const REAL_ANSWER_1: u64 = 299;
 
 test "part 1 real" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

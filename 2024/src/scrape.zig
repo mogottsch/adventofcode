@@ -67,7 +67,7 @@ const AocUrl = struct {
     url_string: []const u8,
     allocator: std.mem.Allocator,
 
-    pub fn init(allocator: std.mem.Allocator, year: u32, day: u32, page: Pages) !AocUrl {
+    pub fn init(allocator: std.mem.Allocator, year: u64, day: u64, page: Pages) !AocUrl {
         const path = page.getPagePath();
         const url = try std.fmt.allocPrint(
             allocator,
@@ -86,7 +86,7 @@ const AocUrl = struct {
     }
 };
 
-pub fn fetchDayData(allocator: std.mem.Allocator, year: u32, day: u32) !DayData {
+pub fn fetchDayData(allocator: std.mem.Allocator, year: u64, day: u64) !DayData {
     const input = try fetchInput(allocator, year, day);
     errdefer allocator.free(input);
 
@@ -106,7 +106,7 @@ pub fn fetchDayData(allocator: std.mem.Allocator, year: u32, day: u32) !DayData 
     };
 }
 
-fn scrapeMainPage(allocator: std.mem.Allocator, year: u32, day: u32) !ScrapedData {
+fn scrapeMainPage(allocator: std.mem.Allocator, year: u64, day: u64) !ScrapedData {
     const body = try fetchMainPageBody(allocator, year, day);
     defer allocator.free(body);
 
@@ -133,7 +133,7 @@ fn scrapeMainPage(allocator: std.mem.Allocator, year: u32, day: u32) !ScrapedDat
 const PUZZLE_ANSWER_PREFIX = "Your puzzle answer was";
 
 fn detectDayStage(text: []const u8) !DayStage {
-    var count: u32 = 0;
+    var count: u64 = 0;
     var last_idx: usize = 0;
 
     while (true) {
@@ -362,7 +362,7 @@ fn makeRequest(
     return response_data_array.toOwnedSlice();
 }
 
-fn fetchMainPageBody(allocator: std.mem.Allocator, year: u32, day: u32) ![]const u8 {
+fn fetchMainPageBody(allocator: std.mem.Allocator, year: u64, day: u64) ![]const u8 {
     const url = try AocUrl.init(allocator, year, day, Pages.Main);
     defer url.deinit();
 
@@ -372,7 +372,7 @@ fn fetchMainPageBody(allocator: std.mem.Allocator, year: u32, day: u32) ![]const
     return makeRequest(allocator, url, &[_]http.Header{cookie_header});
 }
 
-fn fetchInput(allocator: std.mem.Allocator, year: u32, day: u32) ![]const u8 {
+fn fetchInput(allocator: std.mem.Allocator, year: u64, day: u64) ![]const u8 {
     const url = try AocUrl.init(allocator, year, day, Pages.Input);
     defer url.deinit();
 

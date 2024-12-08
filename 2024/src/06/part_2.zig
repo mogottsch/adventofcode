@@ -6,7 +6,7 @@ const part_1 = @import("part_1.zig");
 const Vector2D = parse.Vector2D;
 
 // maybe some cache would help to speed this up
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var guard = try part_1.findGuard(input);
     const starting_position = guard.position;
 
@@ -16,7 +16,7 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     var placed_obstacles = std.AutoHashMap(Vector2D, void).init(allocator);
     defer placed_obstacles.deinit();
 
-    var possible_positions: u32 = 0;
+    var possible_positions: u64 = 0;
 
     while (true) {
         if (checked_positions.contains(guard)) {
@@ -56,13 +56,13 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     return possible_positions;
 }
 
-pub fn run2(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+pub fn run2(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     const guard = try part_1.findGuard(input);
     const starting_position = guard.position;
 
-    var possible_positions: u32 = 0;
+    var possible_positions: u64 = 0;
 
-    var progress: u32 = 0;
+    var progress: u64 = 0;
     const grid_len: f32 = @floatFromInt(input.grid.len);
     const grid_inner_len: f32 = @floatFromInt(input.grid[0].len);
     const total: f32 = grid_len * grid_inner_len;

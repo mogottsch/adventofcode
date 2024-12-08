@@ -3,10 +3,10 @@ const parse = @import("parse.zig");
 const testing = std.testing;
 const pretty = @import("pretty");
 
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     const updates = input.updates;
 
-    var valid_updates = try std.ArrayList([]u32).initCapacity(allocator, updates.len);
+    var valid_updates = try std.ArrayList([]u64).initCapacity(allocator, updates.len);
     defer valid_updates.deinit();
 
     for (updates) |update| {
@@ -20,13 +20,13 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
     return sum;
 }
 
-fn getMiddlePage(update: []const u32) !u32 {
+fn getMiddlePage(update: []const u64) !u64 {
     std.debug.assert(update.len % 2 == 1);
     return update[update.len / 2];
 }
 
-pub fn sumMiddlePages(updates: [][]const u32) !u32 {
-    var sum: u32 = 0;
+pub fn sumMiddlePages(updates: [][]const u64) !u64 {
+    var sum: u64 = 0;
     for (updates) |update| {
         sum += try getMiddlePage(update);
     }
@@ -35,10 +35,10 @@ pub fn sumMiddlePages(updates: [][]const u32) !u32 {
 
 pub fn isValidUpdate(
     allocator: std.mem.Allocator,
-    update: []const u32,
-    rules: std.AutoHashMap(u32, []u32),
+    update: []const u64,
+    rules: std.AutoHashMap(u64, []u64),
 ) !bool {
-    var past_pages = std.AutoHashMap(u32, bool).init(allocator);
+    var past_pages = std.AutoHashMap(u64, bool).init(allocator);
     defer past_pages.deinit();
 
     for (update) |page| {

@@ -25,8 +25,8 @@ pub const Instruction = enum {
 
 pub const InstructionWithArgs = struct {
     command: Instruction,
-    a: u32,
-    b: u32,
+    a: u64,
+    b: u64,
 };
 
 pub const Input = struct {
@@ -88,11 +88,11 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
                 i += 1;
                 continue;
             }
-            const a = std.fmt.parseInt(u32, a_str, 10) catch {
+            const a = std.fmt.parseInt(u64, a_str, 10) catch {
                 i += 1;
                 continue;
             };
-            const b = std.fmt.parseInt(u32, b_str, 10) catch {
+            const b = std.fmt.parseInt(u64, b_str, 10) catch {
                 i += 1;
                 continue;
             };
@@ -131,8 +131,8 @@ pub fn parse_file_regex(allocator: std.mem.Allocator, filename: []const u8) !Inp
         const b_str = if (instruction == Instruction.Mul) (regex.Captures.sliceAt(&captures, 3) orelse "0") else "0";
 
         const pair = InstructionWithArgs{
-            .a = try std.fmt.parseInt(u32, a_str, 10),
-            .b = try std.fmt.parseInt(u32, b_str, 10),
+            .a = try std.fmt.parseInt(u64, a_str, 10),
+            .b = try std.fmt.parseInt(u64, b_str, 10),
             .command = instruction,
         };
         try instructions.append(pair);

@@ -3,8 +3,8 @@ const path = @import("common").path;
 const log = std.log;
 
 pub const Input = struct {
-    left: []u32,
-    right: []u32,
+    left: []u64,
+    right: []u64,
 
     allocator: std.mem.Allocator,
 
@@ -27,10 +27,10 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
         if (c == '\n') count += 1;
     }
 
-    const left = try allocator.alloc(u32, count);
+    const left = try allocator.alloc(u64, count);
     errdefer allocator.free(left);
 
-    const right = try allocator.alloc(u32, count);
+    const right = try allocator.alloc(u64, count);
     errdefer allocator.free(right);
 
     var line_iterator = std.mem.splitScalar(u8, content[0 .. content.len - 1], '\n');
@@ -40,8 +40,8 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
         const left_part = parts.next().?;
         const right_part = parts.next().?;
 
-        left[i] = try std.fmt.parseInt(u32, left_part, 10);
-        right[i] = try std.fmt.parseInt(u32, right_part, 10);
+        left[i] = try std.fmt.parseInt(u64, left_part, 10);
+        right[i] = try std.fmt.parseInt(u64, right_part, 10);
     }
 
     return Input{ .left = left, .right = right, .allocator = allocator };

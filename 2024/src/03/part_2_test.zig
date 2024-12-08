@@ -3,7 +3,7 @@ const testing = std.testing;
 const parse = @import("parse.zig");
 const part_2 = @import("part_2.zig");
 
-const EXAMPLE_ANSWER_2: u32 = 48;
+const EXAMPLE_ANSWER_2: u64 = 48;
 
 test "part 2 example" {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};

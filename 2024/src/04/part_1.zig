@@ -7,7 +7,7 @@ const string = @import("common").string;
 const WORD = "XMAS";
 const WORD_BACKWARDS = "SAMX";
 
-pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     // return runSolutionA(allocator, input);
 
     _ = allocator;
@@ -29,11 +29,11 @@ const AllDirections = struct {
     }
 };
 
-fn runSolutionA(allocator: std.mem.Allocator, input: parse.Input) !u32 {
+fn runSolutionA(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var all_directions = try linesToAllDirections(allocator, input.lines);
     defer all_directions.deinit();
 
-    var total_occurrences: u32 = 0;
+    var total_occurrences: u64 = 0;
     for (all_directions.lines) |line| {
         total_occurrences += string.countOccurrences(WORD, line) +
             string.countOccurrences(WORD_BACKWARDS, line);
@@ -170,10 +170,10 @@ const DIRECTIONS = [_]Direction{
     .{ .dr = -1, .dc = -1 }, // up-left
 };
 
-fn runSolutionB(lines: []const []const u8) u32 {
+fn runSolutionB(lines: []const []const u8) u64 {
     const rows = lines.len;
     const cols = lines[0].len;
-    var count: u32 = 0;
+    var count: u64 = 0;
 
     for (0..rows) |r| {
         for (0..cols) |c| {

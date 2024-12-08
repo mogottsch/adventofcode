@@ -2,8 +2,8 @@ const std = @import("std");
 const parse = @import("parse.zig");
 const testing = std.testing;
 
-pub fn run(_: std.mem.Allocator, input: parse.Input) !u32 {
-    var safe_reports: u32 = 0;
+pub fn run(_: std.mem.Allocator, input: parse.Input) !u64 {
+    var safe_reports: u64 = 0;
     for (input.reports) |report| {
         if (isSafe(report)) {
             safe_reports += 1;

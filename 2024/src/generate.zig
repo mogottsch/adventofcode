@@ -8,7 +8,7 @@ const cwd = std.fs.cwd();
 const log = std.log;
 
 const TemplatedFile = struct {
-    index: u32,
+    index: u64,
     template_name: []const u8,
     output_name: []const u8,
     should_overwrite: bool,
@@ -105,7 +105,7 @@ pub fn main() !void {
     try writeDataDir(allocator, output_dir_path, day_data);
 }
 
-fn parseDayFromArgs() !u32 {
+fn parseDayFromArgs() !u64 {
     var args = std.process.args();
     _ = args.skip();
     const day_arg = args.next();
@@ -114,7 +114,7 @@ fn parseDayFromArgs() !u32 {
         return error.MissingArgument;
     }
 
-    const day = try std.fmt.parseInt(u32, day_arg.?, 10);
+    const day = try std.fmt.parseInt(u64, day_arg.?, 10);
 
     return day;
 }
