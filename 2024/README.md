@@ -33,4 +33,3 @@ zig build bench-1
 
 # Todos
 - [ ] handle multiple code blocks properly
-- [ ] fix day 6 part 2
