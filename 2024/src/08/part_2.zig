@@ -6,18 +6,18 @@ const common = @import("common");
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var unique_antinodes = std.AutoHashMap(parse.Vector2D, void).init(allocator);
+    unique_antinodes.ensureTotalCapacity(@intCast(input.grid.len * input.grid[0].len)) catch {};
     defer unique_antinodes.deinit();
 
     var iter = input.antennas.valueIterator();
     while (iter.next()) |antennas| {
-        try calculateAntinodesForFrequency(allocator, antennas.items, input, &unique_antinodes);
+        try calculateAntinodesForFrequency(antennas.items, input, &unique_antinodes);
     }
 
     return unique_antinodes.count();
 }
 
 fn calculateAntinodesForFrequency(
-    _: std.mem.Allocator,
     antennas: []parse.Vector2D,
     input: parse.Input,
     unique_antinodes: *std.AutoHashMap(parse.Vector2D, void),
@@ -40,13 +40,13 @@ fn calculateAntinodesForAntennas(
 
     var current = antenna_a;
     while (true) {
-        try unique_antinodes.put(current, {});
+        unique_antinodes.putAssumeCapacity(current, {});
         current = current.subSafe(norm_direction, input) catch break;
     }
 
     current = antenna_b;
     while (true) {
-        try unique_antinodes.put(current, {});
+        unique_antinodes.putAssumeCapacity(current, {});
         current = current.addSafe(norm_direction, input) catch break;
     }
 }

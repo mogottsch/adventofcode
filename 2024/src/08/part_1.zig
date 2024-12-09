@@ -6,6 +6,8 @@ const common = @import("common");
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var unique_antinodes = std.AutoHashMap(parse.Vector2D, void).init(allocator);
+    unique_antinodes.ensureTotalCapacity(@intCast(input.grid.len * input.grid[0].len)) catch {};
+
     defer unique_antinodes.deinit();
 
     var iter = input.antennas.valueIterator();
@@ -44,6 +46,6 @@ fn calculateAntinodesForAntennas(
     const antinode_a = antenna_a.subSafe(direction, input) catch null;
     const antinode_b = antenna_b.addSafe(direction, input) catch null;
 
-    if (antinode_a) |antinode| try unique_antinodes.put(antinode, {});
-    if (antinode_b) |antinode| try unique_antinodes.put(antinode, {});
+    if (antinode_a) |antinode| unique_antinodes.putAssumeCapacity(antinode, {});
+    if (antinode_b) |antinode| unique_antinodes.putAssumeCapacity(antinode, {});
 }
