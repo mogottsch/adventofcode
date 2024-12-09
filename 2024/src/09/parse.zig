@@ -3,7 +3,6 @@ const path = @import("common").path;
 const log = std.log;
 
 pub const EMTPY_CHAR: u64 = std.math.maxInt(u64);
-// pub const EMTPY_CHAR: u64 = 100;
 
 pub const Input = struct {
     disk: []u64,
@@ -12,6 +11,13 @@ pub const Input = struct {
 
     pub fn deinit(self: *Input) void {
         self.allocator.free(self.disk);
+    }
+
+    pub fn copy(self: Input, allocator: std.mem.Allocator) !Input {
+        return Input{
+            .disk = try allocator.dupe(u64, self.disk),
+            .allocator = allocator,
+        };
     }
 };
 

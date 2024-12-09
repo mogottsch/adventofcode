@@ -5,21 +5,31 @@ const pretty = @import("pretty");
 
 const EMTPY_CHAR = parse.EMTPY_CHAR;
 
-pub fn run(_: std.mem.Allocator, input: parse.Input) !u64 {
+pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     const disk = input.disk;
 
-    reorderDisk(disk);
+    try reorderDisk(disk, allocator);
 
     return calculateChecksum(disk);
 }
 
-fn reorderDisk(disk: []u64) void {
+fn reorderDisk(disk: []u64, allocator: std.mem.Allocator) !void {
     var right_index: usize = disk.len - 1;
+
+    const highest_file_id = getHighestFileId(disk);
+    var checked_file_ids = try allocator.alloc(bool, highest_file_id + 1);
+    defer allocator.free(checked_file_ids);
 
     while (right_index > 0) {
         while (disk[right_index] == EMTPY_CHAR) right_index -= 1;
 
+        const file_id = disk[right_index];
         const block = getFileBlock(disk, right_index);
+        if (checked_file_ids[file_id]) {
+            right_index = block.start_index - 1;
+            continue;
+        }
+        checked_file_ids[file_id] = true;
 
         var left_index = findEmptySpaceWithSize(
             disk,
@@ -86,7 +96,7 @@ fn moveFileBlock(disk: []u64, block: Block, start_index_empty_space: usize) void
     @memset(disk[block.start_index .. block.start_index + size], EMTPY_CHAR);
 }
 
-pub fn calculateChecksum(disk: []u64) u64 {
+fn calculateChecksum(disk: []u64) u64 {
     var i: usize = 0;
     var checksum: u64 = 0;
 
@@ -99,6 +109,15 @@ pub fn calculateChecksum(disk: []u64) u64 {
         i += 1;
     }
     return checksum;
+}
+
+fn getHighestFileId(disk: []u64) u64 {
+    // highest file id will be at the end of the disk, so just search the last block
+    var i = disk.len - 1;
+    while (disk[i] == EMTPY_CHAR) {
+        i -= 1;
+    }
+    return disk[i];
 }
 
 test "getFileBlock" {

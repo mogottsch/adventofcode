@@ -12,12 +12,22 @@ pub fn runBenchmarks(
     const BenchContext = struct {
         var gpa = std.heap.GeneralPurposeAllocator(.{}){};
         var input: ParseResult = undefined;
+        var cached_input: ?ParseResult = null;
 
-        fn beforeAll() void {
+        fn before() void {
+            if (comptime @hasDecl(ParseResult, "copy")) {
+                if (cached_input != null) {
+                    input = cached_input.?.copy(gpa.allocator()) catch unreachable;
+                    return;
+                }
+            }
             input = parse_fn(gpa.allocator(), "input.txt") catch unreachable;
+            if (comptime @hasDecl(ParseResult, "copy")) {
+                cached_input = input.copy(gpa.allocator()) catch unreachable;
+            }
         }
 
-        fn afterAll() void {
+        fn after() void {
             input.deinit();
         }
 
@@ -35,6 +45,9 @@ pub fn runBenchmarks(
         }
 
         fn deinit() void {
+            if (cached_input != null) {
+                cached_input.?.deinit();
+            }
             const deinit_status = gpa.deinit();
             if (deinit_status == .leak) @panic("Memory leak detected");
         }
@@ -47,14 +60,14 @@ pub fn runBenchmarks(
     try bench.add("Parse Input", BenchContext.benchParse, .{});
     try bench.add("Part 1", BenchContext.benchPart1, .{
         .hooks = .{
-            .before_each = BenchContext.beforeAll,
-            .after_each = BenchContext.afterAll,
+            .before_each = BenchContext.before,
+            .after_each = BenchContext.after,
         },
     });
     try bench.add("Part 2", BenchContext.benchPart2, .{
         .hooks = .{
-            .before_each = BenchContext.beforeAll,
-            .after_each = BenchContext.afterAll,
+            .before_each = BenchContext.before,
+            .after_each = BenchContext.after,
         },
     });
 
