@@ -2,6 +2,8 @@ const std = @import("std");
 const path = @import("common").path;
 const log = std.log;
 
+const EMPTY_CELL = '.';
+
 pub const Vector2D = struct {
     x: i32,
     y: i32,
@@ -33,6 +35,7 @@ pub const Vector2D = struct {
 
 pub const Input = struct {
     grid: [][]u8,
+    antennas: std.AutoHashMap(u8, std.ArrayList(Vector2D)),
 
     allocator: std.mem.Allocator,
 
@@ -41,6 +44,12 @@ pub const Input = struct {
             self.allocator.free(row);
         }
         self.allocator.free(self.grid);
+
+        var it = self.antennas.valueIterator();
+        while (it.next()) |list| {
+            list.deinit();
+        }
+        self.antennas.deinit();
     }
 
     pub fn print(self: Input) void {
@@ -50,7 +59,7 @@ pub const Input = struct {
     }
 };
 
-pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
+pub fn parseFile(allocator: std.mem.Allocator, filename: []const u8) !Input {
     const filepath = try path.buildPath(allocator, filename);
     defer allocator.free(filepath);
     const file = try std.fs.openFileAbsolute(filepath, .{});
@@ -71,8 +80,31 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
         try lines.append(try allocator.dupe(u8, line));
     }
 
+    const grid = try lines.toOwnedSlice();
     return Input{
-        .grid = try lines.toOwnedSlice(),
+        .grid = grid,
+        .antennas = try getAntennasByFrequency(allocator, grid),
         .allocator = allocator,
     };
+}
+
+fn getAntennasByFrequency(allocator: std.mem.Allocator, grid: [][]u8) !std.AutoHashMap(u8, std.ArrayList(Vector2D)) {
+    var result = std.AutoHashMap(u8, std.ArrayList(Vector2D)).init(allocator);
+    errdefer result.deinit();
+
+    for (grid, 0..) |row, y| {
+        for (row, 0..) |cell, x| {
+            if (cell == EMPTY_CELL) {
+                continue;
+            }
+            const position = Vector2D{ .x = @intCast(x), .y = @intCast(y) };
+            const gop = try result.getOrPut(cell);
+            if (!gop.found_existing) {
+                gop.value_ptr.* = std.ArrayList(Vector2D).init(allocator);
+            }
+            try gop.value_ptr.append(position);
+        }
+    }
+
+    return result;
 }
