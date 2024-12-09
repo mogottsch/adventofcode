@@ -46,7 +46,7 @@ const DONT_STR_LEN = DONT_STR.len;
 const MUL_STR = "mul(";
 const MUL_STR_LEN = MUL_STR.len;
 
-pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
+pub fn parseFile(allocator: std.mem.Allocator, filename: []const u8) !Input {
     const content = try readFileContent(allocator, filename);
     defer allocator.free(content);
 
@@ -108,7 +108,7 @@ pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
 }
 
 // this is way slower
-pub fn parse_file_regex(allocator: std.mem.Allocator, filename: []const u8) !Input {
+pub fn parseFile_regex(allocator: std.mem.Allocator, filename: []const u8) !Input {
     const content = try readFileContent(allocator, filename);
     defer allocator.free(content);
 

@@ -73,7 +73,7 @@ pub const Input = struct {
     }
 };
 
-pub fn parse_file(allocator: std.mem.Allocator, filename: []const u8) !Input {
+pub fn parseFile(allocator: std.mem.Allocator, filename: []const u8) !Input {
     const filepath = try path.buildPath(allocator, filename);
     defer allocator.free(filepath);
     const file = try std.fs.openFileAbsolute(filepath, .{});

@@ -17,7 +17,7 @@ const PartErrors = error{
 pub fn run(
     comptime InputType: type,
     comptime ReturnType: type,
-    comptime parse_file: fn (allocator: std.mem.Allocator, path: []const u8) anyerror!InputType,
+    comptime parseFile: fn (allocator: std.mem.Allocator, path: []const u8) anyerror!InputType,
     comptime run_part_1: fn (allocator: std.mem.Allocator, input: InputType) anyerror!ReturnType,
     comptime run_part_2: fn (allocator: std.mem.Allocator, input: InputType) anyerror!ReturnType,
 ) !void {
@@ -26,7 +26,7 @@ pub fn run(
     defer _ = gpa.deinit();
 
     const args = try argparse.parseArgs(allocator);
-    var input = try parse_file(allocator, args.path);
+    var input = try parseFile(allocator, args.path);
     defer input.deinit();
 
     var result: ?ReturnType = null;
