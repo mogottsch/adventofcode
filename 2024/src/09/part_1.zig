@@ -28,7 +28,7 @@ fn reorderDisk(disk: []u64) void {
     }
 }
 
-fn calculateChecksum(disk: []u64) u64 {
+pub fn calculateChecksum(disk: []u64) u64 {
     var i: usize = 0;
     var checksum: u64 = 0;
 

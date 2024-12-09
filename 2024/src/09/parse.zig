@@ -3,6 +3,7 @@ const path = @import("common").path;
 const log = std.log;
 
 pub const EMTPY_CHAR: u64 = std.math.maxInt(u64);
+// pub const EMTPY_CHAR: u64 = 100;
 
 pub const Input = struct {
     disk: []u64,
