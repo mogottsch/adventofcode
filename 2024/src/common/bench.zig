@@ -47,14 +47,14 @@ pub fn runBenchmarks(
     try bench.add("Parse Input", BenchContext.benchParse, .{});
     try bench.add("Part 1", BenchContext.benchPart1, .{
         .hooks = .{
-            .before_all = BenchContext.beforeAll,
-            .after_all = BenchContext.afterAll,
+            .before_each = BenchContext.beforeAll,
+            .after_each = BenchContext.afterAll,
         },
     });
     try bench.add("Part 2", BenchContext.benchPart2, .{
         .hooks = .{
-            .before_all = BenchContext.beforeAll,
-            .after_all = BenchContext.afterAll,
+            .before_each = BenchContext.beforeAll,
+            .after_each = BenchContext.afterAll,
         },
     });
 
