@@ -68,11 +68,10 @@ pub const Guard = struct {
     }
 
     pub fn doStep(guard: Guard, input: parse.Input) !Guard {
-        var new_guard = guard;
-        if (guard.facesObstacle(input)) {
-            new_guard = new_guard.turn90DegreesRight();
+        while (guard.facesObstacle(input)) {
+            return guard.turn90DegreesRight();
         }
-        return try new_guard.moveForward(input);
+        return try guard.moveForward(input);
     }
 };
 

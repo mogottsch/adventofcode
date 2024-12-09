@@ -8,6 +8,7 @@ const Vector2D = parse.Vector2D;
 // maybe some cache would help to speed this up
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var guard = try part_1.findGuard(input);
+    const initial_guard = guard;
     const starting_position = guard.position;
 
     var checked_positions = std.AutoHashMap(part_1.Guard, void).init(allocator);
@@ -16,44 +17,23 @@ pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var placed_obstacles = std.AutoHashMap(Vector2D, void).init(allocator);
     defer placed_obstacles.deinit();
 
-    var possible_positions: u64 = 0;
-
     while (true) {
-        if (checked_positions.contains(guard)) {
-            break;
-        }
+        const position = guard.position;
 
-        try checked_positions.put(guard, {});
-
-        const pos_in_front = guard.getViewVector(input) catch |err| {
-            if (err == error.OutOfBounds) {
-                break;
-            }
-            return err;
-        };
-
-        if (
-        // can't place Obstacle at guards starting position
-        (pos_in_front.x == starting_position.x and pos_in_front.y == starting_position.y) or
-            // can't place Obstacle where already obstacle
-            (try input.getCell(pos_in_front) == parse.Cell.Obstacle) or
-            // can't place Obstacle where already obstacle was placed
-            placed_obstacles.contains(pos_in_front))
-        {
-            guard = try guard.doStep(input);
+        if ((position.x == starting_position.x and position.y == starting_position.y)) {
+            guard = guard.doStep(input) catch break;
             continue;
         }
 
-        var input_to_check = try input.copyAndPlaceObstacle(allocator, pos_in_front);
+        var input_to_check = try input.copyAndPlaceObstacle(allocator, position);
         defer input_to_check.deinit();
-        if (try checkCircle(allocator, input_to_check, guard)) {
-            try placed_obstacles.put(pos_in_front, {});
-            possible_positions += 1;
+        if (try checkCircle(allocator, input_to_check, initial_guard)) {
+            try placed_obstacles.put(position, {});
         }
 
-        guard = try guard.doStep(input);
+        guard = guard.doStep(input) catch break;
     }
-    return possible_positions;
+    return placed_obstacles.count();
 }
 
 pub fn run2(allocator: std.mem.Allocator, input: parse.Input) !u64 {
