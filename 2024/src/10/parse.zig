@@ -20,18 +20,12 @@ pub const Vector2D = struct {
         return .{ .x = @intCast(x), .y = @intCast(y) };
     }
 
-    // pub fn sub(self: Vector2D, other: Vector2D) Vector2D {
-    //     return .{ .x = self.x - other.x, .y = self.y - other.y };
-    // }
-    //
-    // pub fn subSafe(self: Vector2D, other: Vector2D, input: Input) !Vector2D {
-    //     const new = self.sub(other);
-    //     if (new.isOutOfBounds(input)) return error.OutOfBounds;
-    //     return new;
-    // }
-
     pub fn isOutOfBounds(self: Vector2D, input: Input) bool {
         return self.x < 0 or self.y < 0 or self.x >= input.grid[0].len or self.y >= input.grid.len;
+    }
+
+    pub fn toIdx(self: Vector2D, input: Input) usize {
+        return @as(usize, @intCast(self.y * @as(i32, @intCast(input.grid[0].len)) + self.x));
     }
 };
 

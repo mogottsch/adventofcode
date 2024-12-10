@@ -27,34 +27,52 @@ const Direction = enum {
 pub const ALL_DIRECTIONS = [_]Direction{ Direction.Up, Direction.Down, Direction.Left, Direction.Right };
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
-    // input.print();
-
     var sum_trail_heads: u64 = 0;
+    var cache = std.AutoHashMap(Vector2D, u64).init(allocator);
+    try cache.ensureTotalCapacity(@intCast(input.grid.len * input.grid[0].len));
+    defer cache.deinit();
+
     for (0..input.grid.len) |y| {
         for (0..input.grid[0].len) |x| {
             const position = Vector2D.initFromUsize(x, y);
             if (input.getCell(position) == 0) {
-                sum_trail_heads += try countTrailHead(allocator, input, position);
+                sum_trail_heads += try countTrailHead(
+                    allocator,
+                    input,
+                    position,
+                    &cache,
+                );
             }
         }
     }
     return sum_trail_heads;
 }
 
-fn countTrailHead(allocator: std.mem.Allocator, input: parse.Input, trail_head: parse.Vector2D) !u64 {
-    var reached_trail_ends = std.AutoHashMap(Vector2D, void).init(allocator);
+fn countTrailHead(
+    allocator: std.mem.Allocator,
+    input: parse.Input,
+    trail_head: parse.Vector2D,
+    cache: *std.AutoHashMap(Vector2D, u64),
+) !u64 {
+    if (cache.get(trail_head)) |count| {
+        return count;
+    }
+
+    const bit_set_size: usize = @intCast(input.grid.len * input.grid[0].len);
+    var reached_trail_ends = try std.bit_set.DynamicBitSet.initEmpty(allocator, bit_set_size);
     defer reached_trail_ends.deinit();
-    try traverseTrailHead(allocator, input, trail_head, &reached_trail_ends);
-    return reached_trail_ends.count();
+    traverseTrailHead(input, trail_head, &reached_trail_ends);
+    const count = @as(u64, @intCast(reached_trail_ends.count()));
+    try cache.put(trail_head, count);
+    return count;
 }
 
 fn traverseTrailHead(
-    allocator: std.mem.Allocator,
     input: parse.Input,
     trailHead: parse.Vector2D,
-    reached_trail_ends: *std.AutoHashMap(parse.Vector2D, void),
-) !void {
-    var position = trailHead;
+    reached_trail_ends: *std.bit_set.DynamicBitSet,
+) void {
+    const position = trailHead;
     const current_cell = input.getCell(position);
 
     for (ALL_DIRECTIONS) |direction| {
@@ -62,10 +80,11 @@ fn traverseTrailHead(
         const new_cell = input.getCell(new_position);
         if (current_cell + 1 != new_cell) continue;
 
+        const idx = new_position.toIdx(input);
         if (new_cell == 9) {
-            try reached_trail_ends.put(new_position, {});
+            reached_trail_ends.set(idx);
             continue;
         }
-        try traverseTrailHead(allocator, input, new_position, reached_trail_ends);
+        traverseTrailHead(input, new_position, reached_trail_ends);
     }
 }
