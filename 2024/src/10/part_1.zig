@@ -24,7 +24,7 @@ const Direction = enum {
         }
     }
 };
-const ALL_DIRECTIONS = [_]Direction{ Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+pub const ALL_DIRECTIONS = [_]Direction{ Direction.Up, Direction.Down, Direction.Left, Direction.Right };
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     // input.print();

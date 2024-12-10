@@ -78,6 +78,10 @@ pub fn parseFile(allocator: std.mem.Allocator, filename: []const u8) !Input {
     while (it.next()) |line| {
         var row = try allocator.alloc(u8, line.len);
         for (0..line.len) |i| {
+            if (line[i] == '.') {
+                row[i] = 200;
+                continue;
+            }
             row[i] = line[i] - '0'; // fast char to int conversion
         }
         try lines.append(row);
