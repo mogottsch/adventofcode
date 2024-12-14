@@ -3,12 +3,21 @@ const parse = @import("parse.zig");
 const testing = std.testing;
 const pretty = @import("pretty");
 const Vector2D = parse.Vector2D;
+const part_1 = @import("part_1.zig");
+
+const ALL_DIRECTIONS = part_1.ALL_DIRECTIONS;
+const Direction = part_1.Direction;
+const UpVector = part_1.UpVector;
+const LeftVector = part_1.LeftVector;
+const RightVector = part_1.RightVector;
+const DownVector = part_1.DownVector;
+const Region = part_1.Region;
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     const regions = try getAllRegions(allocator, input);
     defer allocator.free(regions);
 
-    return calculatePrice(regions);
+    return part_1.calculatePrice(regions);
 }
 
 pub fn getAllRegions(allocator: std.mem.Allocator, input: parse.Input) ![]Region {
@@ -33,37 +42,6 @@ pub fn getAllRegions(allocator: std.mem.Allocator, input: parse.Input) ![]Region
 
     return regions.toOwnedSlice();
 }
-
-const Region = struct {
-    area: u64,
-    perimeter: u64,
-    type: u8,
-
-    pub fn print(self: Region) void {
-        std.debug.print("Region {c} has area {d} and perimeter {d}\n", .{ self.type, self.area, self.perimeter });
-    }
-};
-
-const UpVector = Vector2D{ .x = 0, .y = -1 };
-const DownVector = Vector2D{ .x = 0, .y = 1 };
-const LeftVector = Vector2D{ .x = -1, .y = 0 };
-const RightVector = Vector2D{ .x = 1, .y = 0 };
-const Direction = enum {
-    Up,
-    Down,
-    Left,
-    Right,
-
-    pub fn getVector(self: Direction) Vector2D {
-        switch (self) {
-            Direction.Up => return UpVector,
-            Direction.Down => return DownVector,
-            Direction.Left => return LeftVector,
-            Direction.Right => return RightVector,
-        }
-    }
-};
-pub const ALL_DIRECTIONS = [_]Direction{ Direction.Up, Direction.Down, Direction.Left, Direction.Right };
 
 fn exploreRegion(
     input: parse.Input,
@@ -111,15 +89,6 @@ fn isPartOfExistingSide(input: parse.Input, position: Vector2D, direction: Direc
     if (input.getCell(potential_existing_site_other_region_pos) == region_type) return false;
 
     return true;
-}
-
-fn calculatePrice(regions: []Region) u64 {
-    var price: u64 = 0;
-    for (regions) |region| {
-        const region_price = region.area * region.perimeter;
-        price += region_price;
-    }
-    return price;
 }
 
 test "isPartOfExistingSide" {
