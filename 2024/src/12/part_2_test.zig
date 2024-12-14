@@ -15,4 +15,3 @@ test "part 2 example" {
     const result = part_2.run(allocator, input);
     try testing.expectEqual(EXAMPLE_ANSWER_2, result);
 }
-
