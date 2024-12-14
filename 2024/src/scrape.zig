@@ -232,7 +232,10 @@ fn extractExampleSolutions(
                 const second_examples = try extractBetween(allocator, second_part, "<code><em>", "</em></code>");
                 defer second_examples.deinit();
 
-                if (second_examples.strings.len == 0) return error.NoExampleSolutions;
+                if (second_examples.strings.len == 0) {
+                    warn("No example solutions for part 2", .{});
+                    return .{ .solution_1 = example_solution_1, .solution_2 = null };
+                }
                 example_solution_2 = try std.fmt.parseInt(
                     u64,
                     second_examples.strings[second_examples.strings.len - 1],
