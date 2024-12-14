@@ -2,48 +2,71 @@ const std = @import("std");
 const parse = @import("parse.zig");
 const testing = std.testing;
 const pretty = @import("pretty");
+const common = @import("common");
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
-    var current_numbers = std.ArrayList(u64).init(allocator);
+    var current_numbers = std.AutoHashMap(u64, u64).init(allocator);
     for (input.numbers.items) |number| {
-        try current_numbers.append(number);
+        try putOrIncrementBy(&current_numbers, number, 1);
     }
+    const result = try doBlinkNTimes(allocator, current_numbers, 25);
+    return result;
+}
 
-    for (0..25) |_| {
-        const new_numbers = try doBlink(allocator, current_numbers.items);
+pub fn doBlinkNTimes(allocator: std.mem.Allocator, numbers: std.AutoHashMap(u64, u64), n: u64) !u64 {
+    var current_numbers = numbers;
+    for (0..n) |_| {
+        const new_numbers = try doBlink(allocator, current_numbers);
         current_numbers.deinit();
         current_numbers = new_numbers;
     }
     defer current_numbers.deinit();
-    return current_numbers.items.len;
+    return sumNumbers(current_numbers);
 }
 
-fn doBlink(allocator: std.mem.Allocator, numbers: []u64) !std.ArrayList(u64) {
-    var new_numbers = std.ArrayList(u64).init(allocator);
+fn doBlink(allocator: std.mem.Allocator, numbers: std.AutoHashMap(u64, u64)) !std.AutoHashMap(u64, u64) {
+    var new_numbers = std.AutoHashMap(u64, u64).init(allocator);
 
-    for (numbers) |number| {
-        try processNumber(number, &new_numbers);
+    var iter = numbers.iterator();
+    while (iter.next()) |entry| {
+        // for (0..entry.value_ptr.*) |_| {
+        //     try processNumber(entry.key_ptr.*, &new_numbers);
+        // }
+        try processNumberNTimes(entry.key_ptr.*, &new_numbers, entry.value_ptr.*);
     }
-    // std.debug.print("new_numbers: {d}\n", .{new_numbers.items});
     return new_numbers;
 }
 
-fn processNumber(
+fn processNumberNTimes(
     number: u64,
-    new_numbers: *std.ArrayList(u64),
+    new_numbers: *std.AutoHashMap(u64, u64),
+    n: u64,
 ) !void {
     if (number == 0) {
-        try new_numbers.append(1);
+        try putOrIncrementBy(new_numbers, 1, n);
         return;
     }
     const n_digits = countDigits(number);
     if (isEven(n_digits)) {
         const split_numbers = splitNumber(number, n_digits);
-        try new_numbers.append(split_numbers.first);
-        try new_numbers.append(split_numbers.second);
+        try putOrIncrementBy(new_numbers, split_numbers.first, n);
+        try putOrIncrementBy(new_numbers, split_numbers.second, n);
         return;
     }
-    try new_numbers.append(number * 2024);
+    try putOrIncrementBy(new_numbers, number * 2024, n);
+}
+
+pub fn putOrIncrementBy(
+    numbers: *std.AutoHashMap(u64, u64),
+    number: u64,
+    increment: u64,
+) !void {
+    const gop = try numbers.getOrPut(number);
+    if (gop.found_existing) {
+        gop.value_ptr.* += increment;
+        return;
+    }
+    gop.value_ptr.* = increment;
 }
 
 fn isEven(n: u64) bool {
@@ -69,10 +92,11 @@ fn splitNumber(n: u64, n_digits: u64) struct { first: u64, second: u64 } {
     };
 }
 
-fn sumNumbers(numbers: []u64) u64 {
+fn sumNumbers(numbers: std.AutoHashMap(u64, u64)) u64 {
     var sum: u64 = 0;
-    for (numbers) |number| {
-        sum += number;
+    var value_iter = numbers.valueIterator();
+    while (value_iter.next()) |count| {
+        sum += count.*;
     }
     return sum;
 }
