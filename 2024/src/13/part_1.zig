@@ -12,6 +12,10 @@ const Solution = struct {
 };
 
 pub fn run(allocator: std.mem.Allocator, input: parse.Input) !u64 {
+    return try findAndSumPrizes(allocator, input);
+}
+
+pub fn findAndSumPrizes(allocator: std.mem.Allocator, input: parse.Input) !u64 {
     var prizes = std.ArrayList(Solution).init(allocator);
     defer prizes.deinit();
 
@@ -32,32 +36,43 @@ pub fn solve(system: System) ?Solution {
     const by: i64 = @intCast(system.b_y);
     const px: i64 = @intCast(system.p_x);
     const py: i64 = @intCast(system.p_y);
+    // ax*a + bx*b = px
+    // ay*a + by*b = py
 
-    var best_cost: i64 = std.math.maxInt(i64);
-    var best_solution: Solution = undefined;
-    var found = false;
+    const det = ax * by - ay * bx;
+    if (det == 0) return null; // lines are parallel
 
-    const search_range: i64 = 200;
-    var a: i64 = 0;
-    while (a <= search_range) : (a += 1) {
-        if (@rem(px - a * ax, bx) != 0) continue;
-        const b = @divExact(px - a * ax, bx);
+    // a = (px*by - py*bx) / det
+    // b = (ax*py - ay*px) / det
 
-        const term1 = a * ay;
-        const term2 = b * by;
-        const sum = term1 + term2;
+    const a_num = px * by - py * bx;
+    const b_num = ax * py - ay * px;
 
-        if (sum != py) continue;
+    if (@rem(a_num, det) != 0 or @rem(b_num, det) != 0) return null;
 
-        const cost = 3 * a + b;
-        if (cost < best_cost) {
-            best_cost = cost;
-            best_solution = .{ .a = a, .b = b, .cost = cost };
-            found = true;
-        }
+    const a = @divExact(a_num, det);
+    const b = @divExact(b_num, det);
+
+    if (a <= 0 or b <= 0) return null;
+
+    return Solution{ .a = a, .b = b, .cost = 3 * a + b };
+}
+
+fn gcd_extended(a: i64, b: i64, x: *i64, y: *i64) i64 {
+    if (a == 0) {
+        x.* = 0;
+        y.* = 1;
+        return b;
     }
 
-    return if (found) best_solution else null;
+    var x1: i64 = undefined;
+    var y1: i64 = undefined;
+    const gcd = gcd_extended(@rem(b, a), a, &x1, &y1);
+
+    x.* = y1 - @divTrunc(b, a) * x1;
+    y.* = x1;
+
+    return gcd;
 }
 
 fn sumPrizes(prizes: []Solution) u64 {
