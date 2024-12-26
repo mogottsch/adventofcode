@@ -4,6 +4,8 @@ const log = std.log;
 
 pub const CELL_WALL = '#';
 pub const CELL_BOX = 'O';
+pub const CELL_BOX_LEFT = '[';
+pub const CELL_BOX_RIGHT = ']';
 pub const CELL_EMPTY = '.';
 pub const CELL_GUARD = '@';
 
@@ -26,6 +28,23 @@ pub const Vector2D = struct {
     pub fn isBox(self: Vector2D, input: Input) bool {
         return self.getCell(input) == CELL_BOX;
     }
+
+    pub fn isLargeBox(self: Vector2D, input: Input) bool {
+        const cell = self.getCell(input);
+        return cell == CELL_BOX_LEFT or cell == CELL_BOX_RIGHT;
+    }
+};
+
+const LeftVector = Vector2D{ .x = -1, .y = 0 };
+const RightVector = Vector2D{ .x = 1, .y = 0 };
+const UpVector = Vector2D{ .x = 0, .y = -1 };
+const DownVector = Vector2D{ .x = 0, .y = 1 };
+
+const Direction = enum {
+    Up,
+    Down,
+    Left,
+    Right,
 };
 
 pub const Instruction = enum(u8) {
@@ -36,10 +55,10 @@ pub const Instruction = enum(u8) {
 
     pub fn toDirectionVector(self: Instruction) Vector2D {
         switch (self) {
-            Instruction.Up => return .{ .x = 0, .y = -1 },
-            Instruction.Down => return .{ .x = 0, .y = 1 },
-            Instruction.Left => return .{ .x = -1, .y = 0 },
-            Instruction.Right => return .{ .x = 1, .y = 0 },
+            Instruction.Up => return UpVector,
+            Instruction.Down => return DownVector,
+            Instruction.Left => return LeftVector,
+            Instruction.Right => return RightVector,
         }
     }
 };
@@ -90,8 +109,75 @@ pub const Input = struct {
         }
     }
 
+    pub fn moveLargeBox(
+        self: *Input,
+        allocator: std.mem.Allocator,
+        position: Vector2D,
+        direction: Vector2D,
+    ) !void {
+        var boxes_to_move_hashmap = std.AutoHashMap(Vector2D, bool).init(allocator);
+        defer boxes_to_move_hashmap.deinit();
+        var check_positions = std.ArrayList(Vector2D).init(allocator);
+        defer check_positions.deinit();
+
+        const second_pos = self.getOtherBoxPart(position);
+
+        try boxes_to_move_hashmap.put(position, true);
+        try boxes_to_move_hashmap.put(second_pos, true);
+
+        try check_positions.append(position);
+        try check_positions.append(second_pos);
+
+        while (check_positions.popOrNull()) |pos| {
+            const check_pos = pos.add(direction);
+            const cell = check_pos.getCell(self.*);
+            if (cell == CELL_WALL) {
+                return error.ImmovableBox;
+            }
+            if (cell == CELL_EMPTY) continue;
+            if (cell == CELL_BOX_LEFT or cell == CELL_BOX_RIGHT) {
+                if (boxes_to_move_hashmap.get(check_pos) == null) {
+                    try boxes_to_move_hashmap.put(check_pos, true);
+                    try check_positions.append(check_pos);
+                }
+                const other_pos = self.getOtherBoxPart(check_pos);
+                if (boxes_to_move_hashmap.get(other_pos) == null) {
+                    try boxes_to_move_hashmap.put(other_pos, true);
+                    try check_positions.append(other_pos);
+                }
+            }
+        }
+
+        var moves = std.ArrayList(struct { from: Vector2D, to: Vector2D, cell: u8 }).init(allocator);
+        defer moves.deinit();
+
+        var iter = boxes_to_move_hashmap.keyIterator();
+        while (iter.next()) |pos| {
+            const pos_cell = pos.getCell(self.*);
+            try moves.append(.{
+                .from = pos.*,
+                .to = pos.add(direction),
+                .cell = pos_cell,
+            });
+        }
+
+        for (moves.items) |move| {
+            self.setCell(move.from, CELL_EMPTY);
+        }
+
+        for (moves.items) |move| {
+            self.setCell(move.to, move.cell);
+        }
+    }
+
     pub fn setCell(self: *Input, position: Vector2D, value: u8) void {
         self.grid[@intCast(position.y)][@intCast(position.x)] = value;
+    }
+
+    fn getOtherBoxPart(self: Input, position: Vector2D) Vector2D {
+        const current_cell = position.getCell(self);
+        const other_direction = if (current_cell == CELL_BOX_LEFT) RightVector else LeftVector;
+        return position.add(other_direction);
     }
 };
 
